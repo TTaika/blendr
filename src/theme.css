@@ -91,3 +91,27 @@ p { margin: 0; }
 .numbers dd { margin: 2px 0 0; font-size: 1.1rem; font-weight: 600; }
 .card-video { width: 100%; border-radius: 12px; background: var(--bg-deep); }
 .contact p { margin-top: 4px; }
+
+/* Forms */
+.form { display: flex; flex-direction: column; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.field > label, .field legend { font-weight: 600; padding: 0; }
+.help { font-size: 0.85rem; color: var(--muted); }
+.counter { font-size: 0.75rem; text-align: right; }
+input[type='text'], input[type='url'], textarea, select {
+  width: 100%;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 16px; /* 16px stops iOS Safari from zooming on focus */
+}
+textarea { resize: vertical; }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+[aria-invalid='true'] { border-color: var(--danger); }
+.options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.option { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); cursor: pointer; font-size: 0.9rem; }
+.option input { accent-color: var(--accent); margin: 0; }
+.option-on { border-color: var(--accent); background: var(--surface-2); }
+.add-keyword { display: flex; flex-direction: column; gap: 8px; }
+.add-keyword select { flex: 1; }
