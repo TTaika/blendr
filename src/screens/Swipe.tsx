@@ -58,14 +58,11 @@ export function Swipe({
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState<Decision | null>(null);
-  const [burst, setBurst] = useState<{ id: number; companyName: string } | null>(null);
   const drag = useRef<{ startX: number; pointerId: number } | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const animRef = useRef<Animation | null>(null);
   const exitingRef = useRef(false);
   const timerRef = useRef<number | null>(null);
-  const burstTimerRef = useRef<number | null>(null);
-  const burstId = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -74,9 +71,6 @@ export function Swipe({
       if (timerRef.current !== null) {
         window.clearTimeout(timerRef.current);
       }
-      if (burstTimerRef.current !== null) {
-        window.clearTimeout(burstTimerRef.current);
-      }
     };
   }, []);
 
@@ -84,17 +78,6 @@ export function Swipe({
     if (!top || exitingRef.current) return;
     exitingRef.current = true;
     setExiting(decision);
-    if (decision === 'like' && company) {
-      burstId.current += 1;
-      setBurst({ id: burstId.current, companyName: company.name });
-      if (burstTimerRef.current !== null) {
-        window.clearTimeout(burstTimerRef.current);
-      }
-      burstTimerRef.current = window.setTimeout(() => {
-        burstTimerRef.current = null;
-        setBurst(null);
-      }, 2000);
-    }
     const finish = () => {
       animRef.current = null;
       timerRef.current = null;
@@ -281,14 +264,6 @@ export function Swipe({
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {burst && (
-        <div key={burst.id} className="match-burst" role="status" aria-live="polite">
-          <span className="match-band" aria-hidden="true" />
-          <p className="match-word">MATCH</p>
-          <p className="match-with">with {burst.companyName}</p>
         </div>
       )}
     </main>

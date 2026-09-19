@@ -321,14 +321,14 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   font-size: 0.75rem;
   text-decoration: underline;
   cursor: pointer;
-  /* Above the swipe screen's full-width action row (z-index 1), below dialogs (10) and the match burst (20);
+  /* Above the swipe screen's full-width action row (z-index 1), below dialogs (10);
      without it the row swallowed taps on phones, where it spans the whole width. */
   z-index: 6;
 }
 
 /* ==========================================================================
    Redesign additions — "Nordic night, cut sharp"
-   Wordmark, segmented progress, swipe background (aurora), match burst.
+   Wordmark, segmented progress, swipe background (aurora).
    ========================================================================== */
 
 /* Wordmark (RoleSelect) */
@@ -403,83 +403,6 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 }
 @media (prefers-reduced-motion: reduce) {
   .aurora-a, .aurora-b { animation: none; }
-}
-
-/* Match animation: band and word share the screen's vertical centre. Total runtime ~2s:
-   band sweeps in over 500ms, the word fades/scales in over 400ms starting at 250ms,
-   then the whole burst holds and fades out between 1600ms and 2000ms. */
-.match-burst {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-  text-align: center;
-  animation: match-burst-fade 2000ms ease forwards;
-}
-.match-band {
-  position: absolute;
-  left: -15vw;
-  right: -15vw;
-  top: 50%;
-  height: 34vh;
-  margin-top: -17vh;
-  background: var(--accent);
-  transform: rotate(-12deg) scaleX(0);
-  transform-origin: left center;
-  animation: match-band-sweep 500ms ease-out forwards;
-}
-.match-word {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  margin: 0;
-  line-height: 1;
-  font-family: var(--font-display);
-  font-weight: 800;
-  /* Sized so "MATCH" fits within the viewport with margin at 360-390px widths (it was clipping). */
-  font-size: clamp(2.8rem, 14vw, 4rem);
-  color: var(--accent-ink);
-  opacity: 0;
-  transform: translateY(-50%) scale(0.85);
-  animation: match-word-in 400ms ease-out 250ms forwards;
-}
-.match-with {
-  /* An opaque badge, not plain text: the caption sits over whatever card content is behind it,
-     so it needs its own background to stay legible instead of blending into the card's copy. */
-  position: absolute;
-  left: 50%;
-  top: calc(50% + 17vh + 48px);
-  transform: translateX(-50%);
-  margin: 0;
-  max-width: calc(100% - 32px);
-  padding: 7px 16px;
-  background: var(--bg-deep);
-  box-shadow: inset 0 0 0 1px var(--border);
-  color: var(--text);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.05rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-@keyframes match-band-sweep {
-  0% { transform: rotate(-12deg) scaleX(0); }
-  100% { transform: rotate(-12deg) scaleX(1); }
-}
-@keyframes match-word-in {
-  0% { opacity: 0; transform: translateY(-50%) scale(0.85); }
-  100% { opacity: 1; transform: translateY(-50%) scale(1); }
-}
-@keyframes match-burst-fade {
-  0%, 80% { opacity: 1; }
-  100% { opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .match-band { animation: none; transform: rotate(-12deg) scaleX(1); }
-  .match-word { animation: none; opacity: 1; transform: translateY(-50%) scale(1); }
-  .match-burst { animation: match-burst-fade 2000ms linear forwards; }
 }
 
 /* Stacked deck: reveal the next card from underneath the top card */

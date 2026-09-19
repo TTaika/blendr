@@ -88,14 +88,14 @@ describe('Swipe', () => {
     unmount();
   });
 
-  it('shows a match burst on like, naming the company, that disappears after about 2s', async () => {
-    const { user } = setup();
+  it('shows no match overlay after a like', async () => {
+    const { user, onLike } = setup();
     await user.click(screen.getByRole('button', { name: 'Like' }));
-    const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('MATCH');
-    expect(status).toHaveTextContent(`with ${fixtureCompany.name}`);
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument(), { timeout: 3000 });
-  }, 6000);
+    await waitFor(() => expect(onLike).toHaveBeenCalledWith(fixtureCompany.id));
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(document.querySelector('.match-burst')).toBeNull();
+    expect(screen.queryByText(`with ${fixtureCompany.name}`)).not.toBeInTheDocument();
+  });
 
   it('likes and passes with the buttons', async () => {
     const { user, onLike, onDiscard } = setup();
