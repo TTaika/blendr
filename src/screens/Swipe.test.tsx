@@ -2,7 +2,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { FeedEntry } from '../../shared/types';
+import type { Company, FeedEntry } from '../../shared/types';
 import { FIXTURE_COMPANY_BY_ID, fixtureCompany, fixtureCompany2 } from '../test/fixtures';
 import { Swipe, swipeDecision } from './Swipe';
 
@@ -116,5 +116,112 @@ describe('Swipe', () => {
     const { user, onDismissPrompt } = setup({ likedCount: 5, showConnectPrompt: true });
     await user.keyboard('{Escape}');
     expect(onDismissPrompt).toHaveBeenCalled();
+  });
+});
+
+describe('deck reveal', () => {
+  const alpha: Company = {
+    id: 'alpha-fixture',
+    name: 'Alpha Fixture',
+    values: ['Speed', 'Trust', 'Focus'],
+    stage: 'seed',
+    raise: [1000, 2000],
+    keywords: [],
+    problem: 'Problem A',
+    solution: 'Solution A',
+    team: 'Team A',
+    keyNumbers: [],
+    whyInvest: 'Why A',
+    website: 'https://alpha.example',
+    contact: { name: 'Ada Alpha', title: 'CEO', email: 'ada@alpha.example' },
+  };
+  const beta: Company = {
+    id: 'beta-fixture',
+    name: 'Beta Fixture',
+    values: ['Craft', 'Care', 'Clarity'],
+    stage: 'series-a',
+    raise: [2000, 4000],
+    keywords: [],
+    problem: 'Problem B',
+    solution: 'Solution B',
+    team: 'Team B',
+    keyNumbers: [],
+    whyInvest: 'Why B',
+    website: 'https://beta.example',
+    contact: { name: 'Bo Beta', title: 'CEO', email: 'bo@beta.example' },
+  };
+  const fixtureCompanies = new Map<string, Company>([
+    [alpha.id, alpha],
+    [beta.id, beta],
+  ]);
+  const twoEntries: FeedEntry[] = [
+    { companyId: alpha.id, score: 90, matched: [] },
+    { companyId: beta.id, score: 70, matched: [] },
+  ];
+
+  function renderDeck(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
+    const handlers = { onLike: vi.fn(), onDiscard: vi.fn(), onOpenConnect: vi.fn(), onDismissPrompt: vi.fn(), onReviewPassed: vi.fn() };
+    const utils = render(
+      <Swipe
+        entries={twoEntries}
+        companies={fixtureCompanies}
+        subtitle="Deck reveal fixture"
+        likedCount={0}
+        showConnectPrompt={false}
+        exitMs={0}
+        {...handlers}
+        {...props}
+      />,
+    );
+    return { user: userEvent.setup(), ...handlers, ...utils };
+  }
+
+  it('renders the next card underneath the top card, hidden from the accessibility tree', () => {
+    renderDeck();
+    const articles = screen.getAllByRole('article');
+    expect(articles).toHaveLength(1);
+    expect(articles[0]).toHaveAccessibleName('Alpha Fixture');
+
+    const main = screen.getByRole('main');
+    const under = main.querySelector('.swipe-card.under');
+    expect(under).not.toBeNull();
+    expect(under).toHaveAttribute('aria-hidden', 'true');
+    expect(within(under as HTMLElement).getByText('Beta Fixture')).toBeInTheDocument();
+  });
+
+  it('renders no under card when there is only one entry', () => {
+    renderDeck({ entries: [twoEntries[0]] });
+    const main = screen.getByRole('main');
+    expect(main.querySelector('.swipe-card.under')).toBeNull();
+  });
+
+  it('promotes the under card DOM node seamlessly to the top on like', async () => {
+    const { user, onLike, rerender } = renderDeck();
+    const main = screen.getByRole('main');
+    const underNode = main.querySelector('.swipe-card.under');
+    expect(underNode).not.toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    await waitFor(() => expect(onLike).toHaveBeenCalledWith(alpha.id));
+
+    rerender(
+      <Swipe
+        entries={[twoEntries[1]]}
+        companies={fixtureCompanies}
+        subtitle="Deck reveal fixture"
+        likedCount={0}
+        showConnectPrompt={false}
+        exitMs={0}
+        onLike={onLike}
+        onDiscard={vi.fn()}
+        onOpenConnect={vi.fn()}
+        onDismissPrompt={vi.fn()}
+        onReviewPassed={vi.fn()}
+      />,
+    );
+
+    const newTop = main.querySelector('.swipe-card:not(.under)');
+    expect(newTop).not.toBeNull();
+    expect(newTop).toBe(underNode);
   });
 });

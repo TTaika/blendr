@@ -41,6 +41,8 @@ export function Swipe({
 }: SwipeProps) {
   const top = entries[0];
   const company = top ? companies.get(top.companyId) : undefined;
+  const next = entries[1];
+  const nextCompany = next ? companies.get(next.companyId) : undefined;
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState<Decision | null>(null);
@@ -113,6 +115,7 @@ export function Swipe({
   }
 
   const offset = exiting === 'like' ? window.innerWidth : exiting === 'discard' ? -window.innerWidth : dx;
+  const p = Math.min(Math.abs(offset) / SWIPE_THRESHOLD, 1);
   const stampOpacity = (sign: 1 | -1) => Math.min(Math.max((sign * offset) / SWIPE_THRESHOLD, 0), 1);
   const dragRatio = exiting === 'like' ? 1 : exiting === 'discard' ? -1 : Math.max(-1, Math.min(1, dx / SWIPE_THRESHOLD));
   const dragStyle = {
@@ -141,6 +144,21 @@ export function Swipe({
       {top && company ? (
         <>
           <div className="deck">
+            {next && nextCompany && (
+              <div
+                key={next.companyId}
+                className="swipe-card under"
+                aria-hidden="true"
+                inert
+                style={{
+                  transform: `translateY(${14 * (1 - p)}px) scale(${0.94 + 0.06 * p})`,
+                  opacity: 0.55 + 0.45 * p,
+                  transition: dragging ? 'none' : `transform ${exitMs}ms ease, opacity ${exitMs}ms ease`,
+                }}
+              >
+                <CompanyCard company={nextCompany} score={next.score} matched={next.matched} />
+              </div>
+            )}
             <div
               key={top.companyId}
               className="swipe-card"
