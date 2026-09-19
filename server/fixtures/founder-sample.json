@@ -6,6 +6,7 @@
     "contactEmail": "elin@northlightgrid.example",
     "values": ["craftsmanship", "customer-obsession", "sustainability"],
     "stage": "seed",
+    "raisedSoFar": "1000",
     "raise": ["2000", "5000"],
     "problemSolution": "Grids need flexibility to absorb wind and solar, but buildings with controllable heating sit idle. We connect building automation to reserve markets and shift heating loads automatically.",
     "growthMoM": "14% month-on-month growth",

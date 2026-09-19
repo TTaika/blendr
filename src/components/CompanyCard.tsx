@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { formatRange } from '../../shared/questions';
+import { formatAmountInline, formatRangeInline } from '../../shared/questions';
 import { getKeyword, stageLabel } from '../../shared/taxonomy';
 import type { Company } from '../../shared/types';
 import { FIT_LABELS, sharedPersonality, topKeywords, type PersonalityFit } from '../lib/matching';
@@ -75,7 +75,8 @@ export function CompanyCard({ company, matched = [], fit, showContact = false, a
           </div>
         )}
         <p className="card-meta muted">
-          {stageLabel(company.stage)} · raising {formatRange(company.raise)}
+          {stageLabel(company.stage)}
+          {company.raised !== undefined && ` · raised ${formatAmountInline(company.raised)}`} · raising {formatRangeInline(company.raise)}
         </p>
         <div className="card-focus">
           <h3>Focus</h3>

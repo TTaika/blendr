@@ -11,6 +11,7 @@ const profile: Profile = {
     contactEmail: ' ada@acme.example ',
     values: ['transparency', 'bogus-id', 'speed', 'integrity', 'craftsmanship'],
     stage: 'series-a',
+    raisedSoFar: '2000',
     raise: ['5000', '10000'],
     problemSolution: 'P and S',
     growthMoM: ' +15% MoM ',
@@ -31,6 +32,7 @@ describe('companyFromFounderProfile', () => {
       id: 'founder-preview',
       name: 'Acme',
       stage: 'series-a',
+      raised: 2000,
       raise: [5000, 10000],
       problem: 'P and S',
       solution: '',
@@ -52,11 +54,30 @@ describe('companyFromFounderProfile', () => {
     ]);
   });
 
+  it('leaves out an amount raised kept from before the founder switched to Pre-seed', () => {
+    const c = companyFromFounderProfile({ ...profile, answers: { ...profile.answers, stage: 'pre-seed' } });
+    expect(c.stage).toBe('pre-seed');
+    expect(c).not.toHaveProperty('raised');
+  });
+
+  it('leaves out a missing or invalid amount raised', () => {
+    for (const raisedSoFar of ['', '1500', 'lots']) {
+      expect(companyFromFounderProfile({ ...profile, answers: { ...profile.answers, raisedSoFar } })).not.toHaveProperty('raised');
+    }
+    const { raisedSoFar: _raisedSoFar, ...unanswered } = profile.answers;
+    expect(companyFromFounderProfile({ ...profile, answers: unanswered })).not.toHaveProperty('raised');
+  });
+
+  it('keeps the lowest amount raised, under €100k', () => {
+    expect(companyFromFounderProfile({ ...profile, answers: { ...profile.answers, stage: 'seed', raisedSoFar: '0' } }).raised).toBe(0);
+  });
+
   it('uses safe fallbacks for missing answers', () => {
     const c = companyFromFounderProfile({ ...profile, answers: {} });
     expect(c.name).toBe('Your company');
     expect(c.stage).toBe('pre-seed');
     expect(c.raise).toEqual([0, 100000]);
+    expect(c).not.toHaveProperty('raised');
     expect(c.keyNumbers).toEqual([]);
     expect(c.values).toEqual([]);
     expect(c.website).toBe('');

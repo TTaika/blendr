@@ -14,6 +14,7 @@ const founderAnswers: Answers = {
   contactEmail: 'ada@acme.example',
   values: ['Payments trust', 'Baker-first support', 'Simple pricing'],
   stage: 'seed',
+  raisedSoFar: '1000',
   raise: ['2000', '5000'],
   problemSolution: 'P and S',
   revenue: 'R',
@@ -223,6 +224,7 @@ describe('Screening', () => {
           contactEmail: 'ada@acme.example',
           values: ['transparency', 'speed', 'integrity'],
           stage: 'seed',
+          raisedSoFar: '1000',
           raise: ['2000', '5000'],
           problemSolution: 'P and S',
           revenue: 'R',
@@ -230,7 +232,7 @@ describe('Screening', () => {
         }}
       />,
     );
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 8; i++) {
       await user.click(screen.getByRole('button', { name: 'Next' }));
     }
     expect(screen.getByRole('group', { name: 'What kind of investor involvement do you want?' })).toBeInTheDocument();
@@ -262,7 +264,7 @@ describe('Screening', () => {
     const user = userEvent.setup();
     render(<Screening role="founder" answers={founderAnswers} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={vi.fn()} generate={generate} />);
     await goToLastStep(user);
-    expect(screen.getByText('13 / 13')).toBeInTheDocument();
+    expect(screen.getByText('14 / 14')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate my profile' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
     expect(generate).toHaveBeenCalledWith('founder', founderAnswers);
@@ -327,6 +329,7 @@ describe('Screening: founder raise range slider', () => {
           contactEmail: 'ada@acme.example',
           values: ['transparency', 'speed', 'integrity'],
           stage: 'seed',
+          raisedSoFar: '1000',
         }}
         onAnswer={vi.fn()}
         onGenerated={vi.fn()}
@@ -336,9 +339,109 @@ describe('Screening: founder raise range slider', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Next' })); // basics -> values
     await user.click(screen.getByRole('button', { name: 'Next' })); // values -> stage
-    await user.click(screen.getByRole('button', { name: 'Next' })); // stage -> raise
+    await user.click(screen.getByRole('button', { name: 'Next' })); // stage -> raisedSoFar
+    await user.click(screen.getByRole('button', { name: 'Next' })); // raisedSoFar -> raise
     expect(screen.getByLabelText('Minimum raise')).toBeInTheDocument();
     expect(screen.getByLabelText('Maximum raise')).toBeInTheDocument();
+  });
+});
+
+describe('Screening: founder amount raised so far', () => {
+  const answeredThroughValues: Answers = {
+    companyName: 'Acme',
+    contactName: 'Ada Lovelace',
+    contactEmail: 'ada@acme.example',
+    values: ['transparency', 'speed', 'integrity'],
+  };
+  const raisedSlider = () => screen.getByRole('slider', { name: 'How much have you raised so far?' });
+
+  async function clickNext(user: UserEvent, times: number) {
+    for (let i = 0; i < times; i++) {
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+    }
+  }
+
+  it('adds a step when the founder picks a stage after pre-seed, and drops it again for pre-seed', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={answeredThroughValues} />);
+    await clickNext(user, 2); // basics -> values -> stage
+    const bar = screen.getByRole('progressbar', { name: 'Question progress' });
+    expect(screen.getByText('3 / 13')).toBeInTheDocument();
+
+    for (const stage of ['Seed', 'Series A', 'Series B+']) {
+      await user.click(screen.getByLabelText(stage));
+      expect(screen.getByText('3 / 14')).toBeInTheDocument();
+      expect(bar).toHaveAttribute('aria-valuemax', '14');
+      expect(bar.querySelectorAll('.progress-seg')).toHaveLength(14);
+    }
+
+    await user.click(screen.getByLabelText('Pre-seed'));
+    expect(screen.getByText('3 / 13')).toBeInTheDocument();
+    expect(bar).toHaveAttribute('aria-valuemax', '13');
+    expect(bar.querySelectorAll('.progress-seg')).toHaveLength(13);
+  });
+
+  it('asks a seed founder right after the stage, with a labelled slider, the amount as text and both end labels', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ ...answeredThroughValues, stage: 'seed', raisedSoFar: '1000' }} />);
+    await clickNext(user, 3);
+    expect(screen.getByText('4 / 14')).toBeInTheDocument();
+    const slider = raisedSlider();
+    expect(slider).toHaveAttribute('type', 'range');
+    expect(slider).toHaveValue('4');
+    expect(slider).toHaveAttribute('aria-valuetext', '€1M');
+    expect(screen.getByText('€1M')).toHaveClass('range-value');
+    expect(screen.getByText('Under €100k')).toBeInTheDocument();
+    expect(screen.getByText('€100M+')).toBeInTheDocument();
+
+    await clickNext(user, 1);
+    expect(screen.getByText('5 / 14')).toBeInTheDocument();
+    expect(screen.getByLabelText('Minimum raise')).toBeInTheDocument();
+  });
+
+  it('answers with the stop value as a string when the slider moves, and shows the new amount', async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(<Controlled role="founder" initial={{ ...answeredThroughValues, stage: 'series-a', raisedSoFar: '1000' }} onAnswer={onAnswer} />);
+    await clickNext(user, 3);
+    fireEvent.change(raisedSlider(), { target: { value: '6' } });
+    expect(onAnswer).toHaveBeenLastCalledWith('raisedSoFar', '5000');
+    expect(raisedSlider()).toHaveAttribute('aria-valuetext', '€5M');
+    expect(screen.getByText('€5M')).toHaveClass('range-value');
+  });
+
+  it('counts an untouched slider as answered, under €100k', async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(<Controlled role="founder" initial={{ ...answeredThroughValues, stage: 'series-b-plus' }} onAnswer={onAnswer} />);
+    await clickNext(user, 3);
+    expect(onAnswer).toHaveBeenLastCalledWith('raisedSoFar', '0');
+    expect(raisedSlider()).toHaveAttribute('aria-valuetext', 'Under €100k');
+    await clickNext(user, 1);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Minimum raise')).toBeInTheDocument();
+  });
+
+  it('skips the question for a pre-seed founder', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ ...answeredThroughValues, stage: 'pre-seed' }} />);
+    await clickNext(user, 3);
+    expect(screen.getByText('4 / 13')).toBeInTheDocument();
+    expect(screen.getByLabelText('Minimum raise')).toBeInTheDocument();
+    expect(screen.queryByRole('slider', { name: 'How much have you raised so far?' })).not.toBeInTheDocument();
+  });
+
+  it('never sends an amount kept from before the founder switched to Pre-seed', async () => {
+    const user = userEvent.setup();
+    const generate = vi.fn(async () => result);
+    render(<Controlled role="founder" initial={founderAnswers} generate={generate} />);
+    await clickNext(user, 2);
+    await user.click(screen.getByLabelText('Pre-seed'));
+    await goToLastStep(user);
+    expect(screen.getByText('13 / 13')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    const { raisedSoFar: _raisedSoFar, ...rest } = founderAnswers;
+    expect(generate).toHaveBeenCalledWith('founder', { ...rest, stage: 'pre-seed' });
   });
 });
 
@@ -408,6 +511,7 @@ describe('Screening: founder scale questions (pressure/transparency/leadership)'
     contactEmail: 'ada@acme.example',
     values: ['transparency', 'speed', 'integrity'],
     stage: 'seed',
+    raisedSoFar: '1000',
     raise: ['2000', '5000'],
     problemSolution: 'P and S',
     revenue: 'R',
@@ -417,7 +521,7 @@ describe('Screening: founder scale questions (pressure/transparency/leadership)'
   };
 
   async function goToPressure(user: UserEvent) {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 11; i++) {
       await user.click(screen.getByRole('button', { name: 'Next' }));
     }
   }
@@ -426,7 +530,7 @@ describe('Screening: founder scale questions (pressure/transparency/leadership)'
     const user = userEvent.setup();
     render(<Controlled role="founder" initial={answeredThroughWhyInvest} />);
     await goToPressure(user);
-    expect(screen.getByText('11 / 13')).toBeInTheDocument();
+    expect(screen.getByText('12 / 14')).toBeInTheDocument();
     const group = screen.getByRole('group', { name: 'How do you handle high-pressure moments?' });
     expect(within(group).getAllByRole('radio')).toHaveLength(10);
     expect(within(group).getByLabelText('7')).toBeInTheDocument();
@@ -440,7 +544,7 @@ describe('Screening: founder scale questions (pressure/transparency/leadership)'
     await goToPressure(user);
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
-    expect(screen.getByText('11 / 13')).toBeInTheDocument();
+    expect(screen.getByText('12 / 14')).toBeInTheDocument();
   });
 
   it('clicking "7" reports onAnswer(\'pressure\', \'7\')', async () => {
@@ -476,12 +580,13 @@ describe('Screening: founder metrics step', () => {
     contactEmail: 'ada@acme.example',
     values: ['transparency', 'speed', 'integrity'],
     stage: 'seed',
+    raisedSoFar: '1000',
     raise: ['2000', '5000'],
     problemSolution: 'P and S',
   };
 
   async function goToMetrics(user: UserEvent) {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       await user.click(screen.getByRole('button', { name: 'Next' }));
     }
   }
@@ -490,7 +595,7 @@ describe('Screening: founder metrics step', () => {
     const user = userEvent.setup();
     render(<Controlled role="founder" initial={answeredThroughProblemSolution} />);
     await goToMetrics(user);
-    expect(screen.getByText('6 / 13')).toBeInTheDocument();
+    expect(screen.getByText('7 / 14')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Key numbers', level: 2 })).toBeInTheDocument();
     expect(screen.getByText('Fill in what applies. Leave the rest empty.')).toBeInTheDocument();
 
@@ -516,7 +621,7 @@ describe('Screening: founder metrics step', () => {
     render(<Controlled role="founder" initial={answeredThroughProblemSolution} />);
     await goToMetrics(user);
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('7 / 13')).toBeInTheDocument();
+    expect(screen.getByText('8 / 14')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -546,6 +651,7 @@ describe('Screening: founder pitch video step', () => {
     contactEmail: 'ada@acme.example',
     values: ['transparency', 'speed', 'integrity'],
     stage: 'seed',
+    raisedSoFar: '1000',
     raise: ['2000', '5000'],
     problemSolution: 'P and S',
     team: 'Team',
@@ -564,7 +670,7 @@ describe('Screening: founder pitch video step', () => {
   const setupUser = () => userEvent.setup({ applyAccept: false });
 
   async function goToVideo(user: UserEvent) {
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 10; i++) {
       await user.click(screen.getByRole('button', { name: 'Next' }));
     }
   }
@@ -579,7 +685,7 @@ describe('Screening: founder pitch video step', () => {
     const user = setupUser();
     renderVideoStep();
     await goToVideo(user);
-    expect(screen.getByText('10 / 13')).toBeInTheDocument();
+    expect(screen.getByText('11 / 14')).toBeInTheDocument();
     const group = screen.getByRole('group', { name: 'Add a pitch video (max 1 minute)' });
     expect(within(group).getByText('Optional. Investors see it on your profile.')).toBeInTheDocument();
     const input = within(group).getByLabelText('Record or choose a video');
@@ -595,7 +701,7 @@ describe('Screening: founder pitch video step', () => {
     renderVideoStep();
     await goToVideo(user);
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('11 / 13')).toBeInTheDocument();
+    expect(screen.getByText('12 / 14')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

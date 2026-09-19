@@ -1,9 +1,10 @@
-import { STAGES, TAXONOMY } from './taxonomy';
+import { STAGES, TAXONOMY, type StageId } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
 // 'video' answers are a short descriptor ("pitch.mov · 0:48"); the video itself stays on the phone
-// (src/lib/videoStore.ts).
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'email' | 'single' | 'multi' | 'range' | 'scale' | 'video';
+// (src/lib/videoStore.ts). 'amount' answers are one stop value as a string, set with a one-handle
+// slider; 'range' answers are two, `[min, max]`.
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'email' | 'single' | 'multi' | 'range' | 'amount' | 'scale' | 'video';
 
 export interface QuestionOption {
   id: string;
@@ -40,6 +41,11 @@ export interface Question {
   page?: string;
   /** When true, this question's answer is never sent to the AI (e.g. personal contact details, the pitch video). */
   excludeFromAi?: boolean;
+  /**
+   * Asks the question only when the answer to the single-choice question `id` is one of `in`.
+   * Otherwise it is skipped, and an answer left from before is ignored (see `isAsked`).
+   */
+  askWhen?: { id: string; in: string[] };
 }
 
 // Values are in € thousands.
@@ -72,6 +78,13 @@ export function parseRange(value: AnswerValue | undefined): [number, number] | n
   return [min, max];
 }
 
+/** Parses an amount answer (one stop value as a string). Returns null unless valid. */
+export function parseAmount(value: AnswerValue | undefined): number | null {
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const n = Number(value);
+  return TICKET_STOP_VALUES.has(n) ? n : null;
+}
+
 /**
  * Formats a € thousands amount. A TICKET_STOPS value uses that stop's label (e.g. 0 → "Under
  * €100k", 100000 → "€100M+"); otherwise below 1000 → "€<k>k" (450 → "€450k"), at or above 1000 →
@@ -89,6 +102,19 @@ export function formatAmount(k: number): string {
 export function formatRange(range: [number, number]): string {
   const [min, max] = range;
   return min === max ? formatAmount(min) : `${formatAmount(min)} – ${formatAmount(max)}`;
+}
+
+// "Under €100k" is the only stop label that starts with a letter.
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
+
+/** Like `formatAmount`, worded to sit mid-sentence: "raised under €100k", not "raised Under €100k". */
+export function formatAmountInline(k: number): string {
+  return lowerFirst(formatAmount(k));
+}
+
+/** Like `formatRange`, worded to sit mid-sentence: "raising under €100k – €500k". */
+export function formatRangeInline(range: [number, number]): string {
+  return lowerFirst(formatRange(range));
 }
 
 /** Parses a scale answer (an integer string within the question's [min, max]). Returns null unless valid. */
@@ -145,6 +171,9 @@ export const PERSONALITY_OPTIONS: QuestionOption[] = TAXONOMY.filter((t) => t.ca
   label: t.label,
 }));
 
+// A founder past pre-seed has raised money before, so is asked how much.
+const RAISED_BEFORE_STAGES: StageId[] = ['seed', 'series-a', 'series-b-plus'];
+
 export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60, page: 'basics' },
   { id: 'website', label: 'Company website', help: 'We read it to suggest keywords.', kind: 'url', required: false, maxLength: 200, page: 'basics' },
@@ -152,6 +181,7 @@ export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'contactEmail', label: 'Contact email', kind: 'email', required: true, maxLength: 120, page: 'basics', excludeFromAi: true },
   { id: 'values', label: "Choose your company's three main values", help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: VALUE_OPTIONS },
   { id: 'stage', label: 'Current funding stage', kind: 'single', required: true, options: [...STAGES] },
+  { id: 'raisedSoFar', label: 'How much have you raised so far?', help: 'Drag to set the amount.', kind: 'amount', required: true, stops: TICKET_STOPS, askWhen: { id: 'stage', in: RAISED_BEFORE_STAGES } },
   { id: 'raise', label: 'How much are you raising?', help: 'Drag both ends to set the range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum raise', 'Maximum raise'] },
   { id: 'problemSolution', label: 'What is the problem and how do you solve it?', kind: 'longtext', required: true, maxLength: 600 },
   { id: 'growthMoM', label: 'Month-over-month growth', kind: 'text', required: false, maxLength: 100, page: 'metrics', placeholder: '+15% revenue MoM over the last 3 months' },
@@ -186,16 +216,38 @@ export function questionsFor(role: Role): Question[] {
   return role === 'founder' ? FOUNDER_QUESTIONS : INVESTOR_QUESTIONS;
 }
 
+/** False when the question's `askWhen` condition isn't met by `answers`, e.g. the raised question for a pre-seed founder. */
+export function isAsked(question: Question, answers: Answers): boolean {
+  if (!question.askWhen) return true;
+  const value = answers[question.askWhen.id];
+  return typeof value === 'string' && question.askWhen.in.includes(value);
+}
+
+/** The role's questions that `answers` make relevant, in order (see `isAsked`). */
+export function askedQuestions(role: Role, answers: Answers): Question[] {
+  return questionsFor(role).filter((q) => isAsked(q, answers));
+}
+
+/**
+ * `answers` without the answers to skipped questions, so an answer left from before (an amount
+ * raised, kept after the founder went back and picked Pre-seed) is never sent anywhere.
+ */
+export function askedAnswers(role: Role, answers: Answers): Answers {
+  const skipped = new Set(questionsFor(role).filter((q) => !isAsked(q, answers)).map((q) => q.id));
+  return Object.fromEntries(Object.entries(answers).filter(([id]) => !skipped.has(id)));
+}
+
 /** Titles shown above a multi-field questionnaire step (see `questionSteps` and `Question.page`). */
 export const PAGE_TITLES: Record<string, string> = { basics: 'The basics', metrics: 'Key numbers' };
 
 /**
- * Groups a role's questions into questionnaire steps: consecutive questions sharing the same
- * `page` render together on one step, and any question without a `page` gets its own step.
+ * Groups a role's asked questions into questionnaire steps: consecutive questions sharing the same
+ * `page` render together on one step, and any question without a `page` gets its own step. The
+ * steps change with the answers, e.g. picking Seed adds the raised question's step.
  */
-export function questionSteps(role: Role): Question[][] {
+export function questionSteps(role: Role, answers: Answers): Question[][] {
   const steps: Question[][] = [];
-  for (const q of questionsFor(role)) {
+  for (const q of askedQuestions(role, answers)) {
     const current = steps[steps.length - 1];
     if (q.page !== undefined && current && current[0].page === q.page) {
       current.push(q);
@@ -218,9 +270,10 @@ function isValidEmail(value: AnswerValue | undefined): boolean {
 }
 
 export function missingRequired(role: Role, answers: Answers): Question[] {
-  return questionsFor(role).filter((q) => {
+  return askedQuestions(role, answers).filter((q) => {
     if (!q.required) return false;
     if (q.kind === 'range') return parseRange(answers[q.id]) === null;
+    if (q.kind === 'amount') return parseAmount(answers[q.id]) === null;
     if (q.kind === 'scale') return parseScale(q, answers[q.id]) === null;
     if (q.kind === 'email') return !isValidEmail(answers[q.id]);
     return isEmpty(answers[q.id]);
@@ -232,6 +285,10 @@ export function formatAnswer(question: Question, value: AnswerValue | undefined)
   if (question.kind === 'range') {
     const range = parseRange(value);
     return range ? formatRange(range) : '';
+  }
+  if (question.kind === 'amount') {
+    const amount = parseAmount(value);
+    return amount === null ? '' : formatAmount(amount);
   }
   if (question.kind === 'scale') {
     const n = parseScale(question, value);

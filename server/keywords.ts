@@ -1,4 +1,4 @@
-import { questionsFor, formatAnswer } from '../shared/questions';
+import { askedQuestions, formatAnswer } from '../shared/questions';
 import { CATEGORY_LABELS, KEYWORD_IDS, TAXONOMY, isKeywordId } from '../shared/taxonomy';
 import type { Answers, KeywordResult, Role } from '../shared/types';
 import type { FetchWebsite } from './website';
@@ -60,7 +60,8 @@ const COMMON_RULES = [
 
 export function buildPrompt(role: Role, answers: Answers, websiteText: string | null): string {
   const keywordList = TAXONOMY.map((t) => `- ${t.id} (${CATEGORY_LABELS[t.category]}): ${t.label}`).join('\n');
-  const qa = questionsFor(role)
+  // Skipped questions are left out, so an answer kept from before (see `isAsked`) never reaches the AI.
+  const qa = askedQuestions(role, answers)
     .filter((q) => !q.excludeFromAi)
     .map((q) => `Q: ${q.label}\nA: ${formatAnswer(q, answers[q.id]) || '(no answer)'}`)
     .join('\n\n');
