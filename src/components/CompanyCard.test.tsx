@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { fixtureCompany } from '../test/fixtures';
 import { CompanyCard } from './CompanyCard';
@@ -106,7 +106,36 @@ describe('CompanyCard', () => {
   it('renders a video only when the company has one', () => {
     const { container, rerender } = render(<CompanyCard company={fixtureCompany} />);
     expect(container.querySelector('video')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Pitch video' })).not.toBeInTheDocument();
     rerender(<CompanyCard company={{ ...fixtureCompany, videoUrl: '/videos/pitch.mp4' }} />);
-    expect(container.querySelector('video')).toHaveAttribute('src', '/videos/pitch.mp4');
+    const video = container.querySelector('video');
+    expect(video).toHaveAttribute('src', '/videos/pitch.mp4');
+    expect(video).toHaveAttribute('controls');
+    expect(video).toHaveAttribute('playsinline');
+    expect(video).toHaveAttribute('preload', 'metadata');
+  });
+
+  it('puts the pitch video in the scroll-down details, after "Why invest"', () => {
+    const { container } = render(<CompanyCard company={{ ...fixtureCompany, videoUrl: '/videos/pitch.mp4' }} />);
+    const details = container.querySelector('.card-details') as HTMLElement;
+    const headings = within(details).getAllByRole('heading').map((h) => h.textContent);
+    expect(headings.indexOf('Pitch video')).toBe(headings.indexOf('Why invest') + 1);
+    expect(container.querySelector('.card-head video')).toBeNull();
+  });
+
+  it('swaps a video that fails to load for a quiet "Pitch video coming soon" placeholder', () => {
+    const { container } = render(<CompanyCard company={{ ...fixtureCompany, videoUrl: '/videos/pitch.mp4' }} />);
+    fireEvent.error(container.querySelector('video')!);
+    expect(container.querySelector('video')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Pitch video' })).toBeInTheDocument();
+    expect(screen.getByText('Pitch video coming soon')).toHaveClass('video-placeholder');
+  });
+
+  it('tries again when the card gets a different video', () => {
+    const { container, rerender } = render(<CompanyCard company={{ ...fixtureCompany, videoUrl: '/videos/pitch.mp4' }} />);
+    fireEvent.error(container.querySelector('video')!);
+    rerender(<CompanyCard company={{ ...fixtureCompany, videoUrl: '/videos/other.mp4' }} />);
+    expect(container.querySelector('video')).toHaveAttribute('src', '/videos/other.mp4');
+    expect(screen.queryByText('Pitch video coming soon')).not.toBeInTheDocument();
   });
 });

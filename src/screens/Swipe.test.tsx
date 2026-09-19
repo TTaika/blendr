@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Company, FeedEntry } from '../../shared/types';
@@ -55,6 +55,21 @@ describe('Swipe', () => {
     expect(topCard.querySelector('.stamp-pass')).not.toBeNull();
     expect(deck.querySelector('.swipe-card.under .stamp')).toBeNull();
     expect(deck.querySelectorAll(':scope > .stamp')).toHaveLength(0);
+  });
+
+  it('lets the pitch video handle its own taps, while a drag on the rest of the card still swipes', () => {
+    const withVideo = new Map([...FIXTURE_COMPANY_BY_ID].map(([id, c]) => [id, { ...c, videoUrl: '/videos/pitch.mp4' }]));
+    const { onLike } = setup({ companies: withVideo });
+    const card = screen.getByRole('article', { name: fixtureCompany.name });
+    const drag = (el: Element) => {
+      fireEvent.pointerDown(el, { clientX: 0, pointerId: 1 });
+      fireEvent.pointerMove(el, { clientX: 150, pointerId: 1 });
+      fireEvent.pointerUp(el, { clientX: 150, pointerId: 1 });
+    };
+    drag(card.querySelector('video')!);
+    expect(onLike).not.toHaveBeenCalled();
+    drag(within(card).getByRole('heading', { name: fixtureCompany.name }));
+    expect(onLike).toHaveBeenCalledWith(fixtureCompany.id);
   });
 
   it('shows only the top company, with a personality fit label in investor mode', () => {

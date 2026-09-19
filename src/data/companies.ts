@@ -2,9 +2,15 @@ import type { Company } from '../../shared/types';
 
 // Real, team-supplied test companies (30) for the Slush demo. Contacts are
 // placeholders (hello@<id>.example) since the source data has no real
-// contact details. companies.test.ts validates the format. To add a pitch
-// video, put the file in public/videos/ and set videoUrl: '/videos/<file>.mp4'.
-export const COMPANIES: Company[] = [
+// contact details. companies.test.ts validates the format. Every company
+// shows the same example pitch video, public/videos/pitch.mp4 (see
+// EXAMPLE_PITCH_VIDEO below); until that file exists the cards say
+// "Pitch video coming soon".
+
+/** Relative to the app base, so the claude.ai build (base './') finds it next to the page. */
+export const EXAMPLE_PITCH_VIDEO = `${import.meta.env.BASE_URL}videos/pitch.mp4`;
+
+const COMPANY_DATA: Company[] = [
   {
     id: 'quantumcore',
     name: 'QuantumCore',
@@ -775,5 +781,7 @@ export const COMPANIES: Company[] = [
     contact: { name: 'Noda founders', title: 'Founding team', email: 'hello@noda.example' },
   },
 ];
+
+export const COMPANIES: Company[] = COMPANY_DATA.map((c) => ({ ...c, videoUrl: EXAMPLE_PITCH_VIDEO }));
 
 export const COMPANY_BY_ID: Map<string, Company> = new Map(COMPANIES.map((c) => [c.id, c]));

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { formatRange } from '../../shared/questions';
 import { getKeyword, stageLabel } from '../../shared/taxonomy';
 import type { Company } from '../../shared/types';
@@ -24,6 +24,14 @@ function Detail({ title, text }: { title: string; text: string }) {
 }
 
 const labelOf = (id: string) => getKeyword(id)?.label ?? id;
+
+// Until a company's video file exists, the request fails (a 404, or index.html from the SPA
+// fallback): show a quiet placeholder instead of a broken player.
+function PitchVideo({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <p className="video-placeholder">Pitch video coming soon</p>;
+  return <video className="card-video" src={src} controls playsInline preload="metadata" onError={() => setFailed(true)} />;
+}
 
 export function CompanyCard({ company, matched = [], fit, showContact = false, allKeywords = false }: CompanyCardProps) {
   const { contact } = company;
@@ -96,7 +104,7 @@ export function CompanyCard({ company, matched = [], fit, showContact = false, a
         {company.videoUrl && (
           <div>
             <h3>Pitch video</h3>
-            <video className="card-video" src={company.videoUrl} controls playsInline preload="metadata" />
+            <PitchVideo key={company.videoUrl} src={company.videoUrl} />
           </div>
         )}
         {showContact && (

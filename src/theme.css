@@ -118,7 +118,8 @@ p { margin: 0; }
 .numbers div { background: var(--bg-deep); padding: 10px 12px; }
 .numbers dt { font-size: 0.75rem; color: var(--muted); }
 .numbers dd { margin: 2px 0 0; font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
-.card-video { width: 100%; background: var(--bg-deep); }
+.card-video { display: block; width: 100%; max-height: 60vh; background: var(--bg-deep); } /* portrait phone videos stay on screen */
+.video-placeholder { display: grid; place-items: center; min-height: 120px; padding: 16px; background: var(--bg-deep); border: 1px dashed var(--border); color: var(--muted); font-size: 0.9rem; text-align: center; }
 .contact p { margin-top: 4px; }
 
 /* Forms */

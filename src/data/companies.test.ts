@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMPANIES, COMPANY_BY_ID } from './companies';
+import { COMPANIES, COMPANY_BY_ID, EXAMPLE_PITCH_VIDEO } from './companies';
 import { getKeyword, isKeywordId, isStageId } from '../../shared/taxonomy';
 
 describe('test companies', () => {
@@ -7,6 +7,11 @@ describe('test companies', () => {
     expect(COMPANIES).toHaveLength(30);
     expect(new Set(COMPANIES.map((c) => c.id)).size).toBe(30);
     for (const c of COMPANIES) expect(COMPANY_BY_ID.get(c.id)).toBe(c);
+  });
+
+  it('gives every company the shared example pitch video, relative to the app base', () => {
+    expect(EXAMPLE_PITCH_VIDEO).toBe(`${import.meta.env.BASE_URL}videos/pitch.mp4`);
+    for (const c of COMPANIES) expect(c.videoUrl).toBe(EXAMPLE_PITCH_VIDEO);
   });
 
   it.each(COMPANIES.map((c) => [c.id, c] as const))('%s is well-formed', (_id, c) => {
