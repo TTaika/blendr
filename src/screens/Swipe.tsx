@@ -174,12 +174,11 @@ export function Swipe({
         <span className="aurora aurora-a" />
         <span className="aurora aurora-b" />
       </div>
-      <header className="row">
-        <div>
+      <header className="swipe-head">
+        <div className="swipe-title">
           <h1>Discover</h1>
           <p className="muted">{subtitle}</p>
         </div>
-        <span className="spacer" />
         <button type="button" className="btn btn-small" onClick={onOpenConnect}>
           Connect ({likedCount})
         </button>

@@ -530,3 +530,16 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 .scale-labels { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; color: var(--muted); }
 .scale-labels span:last-child { text-align: right; }
 
+
+/* Swipe screen: give the card the room. Compact one-row header, tight padding, and the
+   Start over link sits level with the swipe buttons instead of needing its own strip. */
+.screen.swipe { padding: 8px 16px calc(6px + env(safe-area-inset-bottom)); gap: 8px; }
+.swipe-head { display: flex; align-items: center; gap: 10px; }
+.swipe-title { flex: 1; min-width: 0; }
+.swipe-head h1 { font-size: 1.5rem; line-height: 1.05; }
+.swipe-head .muted { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.swipe-actions { gap: 24px; padding: 2px 8px 6px; }
+.swipe .round { width: 56px; height: 56px; font-size: 1.35rem; }
+.swipe ~ .reset { bottom: calc(env(safe-area-inset-bottom) + 12px); }
+.swipe-card .card { padding: 16px; gap: 16px; }
+.swipe-card .card-head { gap: 10px; }
