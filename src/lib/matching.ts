@@ -13,14 +13,14 @@ export interface MatchResult {
   matched: string[];
 }
 
-const STAGE_POINTS = 25;
-const TICKET_POINTS = 15;
+const STAGE_POINTS = 10;
+const TICKET_POINTS = 7;
 const CATEGORY_POINTS: Record<KeywordCategory, { per: number; max: number }> = {
-  sector: { per: 15, max: 30 },
-  geography: { per: 10, max: 10 },
-  model: { per: 5, max: 5 },
+  sector: { per: 5, max: 10 },
+  geography: { per: 5, max: 5 },
+  model: { per: 3, max: 3 },
   involvement: { per: 5, max: 5 },
-  personality: { per: 5, max: 10 },
+  personality: { per: 20, max: 60 },
 };
 
 function asList(value: AnswerValue | undefined): string[] {
@@ -89,4 +89,26 @@ export function topKeywords(company: Company, matched: string[], limit = 4): { i
     ...company.keywords.filter((k) => isMatched.has(k.id)),
     ...company.keywords.filter((k) => !isMatched.has(k.id)),
   ].slice(0, limit);
+}
+
+export type PersonalityFit = 'strong' | 'some' | 'different';
+
+export const FIT_LABELS: Record<PersonalityFit, string> = {
+  strong: 'Strong personality fit',
+  some: 'Some common ground',
+  different: 'Different styles, could complement',
+};
+
+/** Counts matched ids in the personality taxonomy category: ≥2 is a strong fit, 1 is some, 0 is different. */
+export function personalityFit(matched: string[]): PersonalityFit {
+  const count = matched.filter((id) => getKeyword(id)?.category === 'personality').length;
+  if (count >= 2) return 'strong';
+  if (count === 1) return 'some';
+  return 'different';
+}
+
+/** The matched ids that are personality keywords, in company keyword order. */
+export function sharedPersonality(company: Company, matched: string[]): string[] {
+  const isMatched = new Set(matched);
+  return company.keywords.filter((k) => isMatched.has(k.id) && getKeyword(k.id)?.category === 'personality').map((k) => k.id);
 }

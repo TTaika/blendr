@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { Company } from '../../shared/types';
 import { COMPANIES } from '../data/companies';
-import { criteriaFromProfile, randomFeed, rankFeed, scoreCompany, topKeywords, type InvestorCriteria } from './matching';
+import {
+  FIT_LABELS,
+  criteriaFromProfile,
+  personalityFit,
+  randomFeed,
+  rankFeed,
+  scoreCompany,
+  sharedPersonality,
+  topKeywords,
+  type InvestorCriteria,
+} from './matching';
 
 const company = (overrides: Partial<Company> = {}): Company => ({
   id: 'acme',
@@ -17,6 +27,7 @@ const company = (overrides: Partial<Company> = {}): Company => ({
     { id: 'hands-on', reason: 'r' },
     { id: 'data-driven', reason: 'r' },
     { id: 'technical', reason: 'r' },
+    { id: 'long-term', reason: 'r' },
   ],
   problem: 'p',
   solution: 's',
@@ -35,28 +46,46 @@ describe('scoreCompany', () => {
     const criteria: InvestorCriteria = {
       stages: ['seed'],
       ticketRange: [2000, 5000],
-      keywordIds: ['fintech', 'ai-ml', 'b2b', 'nordics', 'hands-on', 'data-driven', 'technical'],
+      keywordIds: ['fintech', 'ai-ml', 'b2b', 'nordics', 'hands-on', 'data-driven', 'technical', 'long-term'],
     };
     expect(scoreCompany(criteria, company()).score).toBe(100);
   });
 
-  it('gives 25 for stage fit and 15 for ticket fit', () => {
-    expect(scoreCompany({ ...none, stages: ['seed'] }, company()).score).toBe(25);
-    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company()).score).toBe(15);
+  it('gives 10 for stage fit and 7 for ticket fit', () => {
+    expect(scoreCompany({ ...none, stages: ['seed'] }, company()).score).toBe(10);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company()).score).toBe(7);
     expect(scoreCompany(none, company()).score).toBe(0);
   });
 
   it('applies ticket fit when the investor range and the raise range overlap as closed ranges', () => {
-    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [2000, 5000] })).score).toBe(15);
-    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [5000, 10000] })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [2000, 5000] })).score).toBe(7);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [5000, 10000] })).score).toBe(7);
     expect(scoreCompany({ ...none, ticketRange: [100, 250] }, company({ raise: [500, 2000] })).score).toBe(0);
-    expect(scoreCompany({ ...none, ticketRange: [50000, 100000] }, company({ raise: [25000, 50000] })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [50000, 100000] }, company({ raise: [25000, 50000] })).score).toBe(7);
     expect(scoreCompany({ ...none, ticketRange: null }, company({ raise: [2000, 5000] })).score).toBe(0);
   });
 
-  it('caps sector points at 30', () => {
+  it('caps sector points at 10', () => {
     const c = company({ keywords: [{ id: 'fintech', reason: 'r' }, { id: 'ai-ml', reason: 'r' }, { id: 'b2b-saas', reason: 'r' }] });
-    expect(scoreCompany({ ...none, keywordIds: ['fintech', 'ai-ml', 'b2b-saas'] }, c).score).toBe(30);
+    expect(scoreCompany({ ...none, keywordIds: ['fintech', 'ai-ml', 'b2b-saas'] }, c).score).toBe(10);
+  });
+
+  it('caps personality points at 60 with 3 or more shared personality keywords', () => {
+    const c = company({
+      keywords: [
+        { id: 'data-driven', reason: 'r' },
+        { id: 'technical', reason: 'r' },
+        { id: 'long-term', reason: 'r' },
+        { id: 'visionary', reason: 'r' },
+      ],
+    });
+    expect(
+      scoreCompany({ ...none, keywordIds: ['data-driven', 'technical', 'long-term'] }, c).score,
+    ).toBe(60);
+    expect(
+      scoreCompany({ ...none, keywordIds: ['data-driven', 'technical', 'long-term', 'visionary'] }, c).score,
+    ).toBe(60);
+    expect(scoreCompany({ ...none, keywordIds: ['data-driven'] }, c).score).toBe(20);
   });
 
   it('returns shared keyword ids in company order', () => {
@@ -73,7 +102,7 @@ describe('rankFeed', () => {
       company({ id: 'a', name: 'Alpha', stage: 'series-a', raise: [5000, 10000] }),
     ]);
     expect(feed.map((e) => e.companyId)).toEqual(['high', 'a', 'b']);
-    expect(feed[0]).toEqual({ companyId: 'high', score: 40, matched: [] });
+    expect(feed[0]).toEqual({ companyId: 'high', score: 17, matched: [] });
   });
 
   it('ranks the real test companies consistently with scoreCompany', () => {
@@ -104,7 +133,7 @@ describe('rankFeed', () => {
   it('fits an investor range around an exact company raise, and rejects a range that misses it', () => {
     expect(
       scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [2500, 2500] })).score,
-    ).toBe(15);
+    ).toBe(7);
     expect(
       scoreCompany({ ...none, ticketRange: [5000, 10000] }, company({ raise: [2500, 2500] })).score,
     ).toBe(0);
@@ -161,5 +190,41 @@ describe('criteriaFromProfile', () => {
         keywords: [],
       }).ticketRange,
     ).toBeNull();
+  });
+});
+
+describe('personalityFit', () => {
+  it('returns strong for 2 or more matched personality keywords', () => {
+    expect(personalityFit(['data-driven', 'technical'])).toBe('strong');
+    expect(personalityFit(['data-driven', 'technical', 'long-term'])).toBe('strong');
+  });
+
+  it('returns some for exactly 1 matched personality keyword', () => {
+    expect(personalityFit(['data-driven'])).toBe('some');
+  });
+
+  it('returns different for 0 matched personality keywords, ignoring non-personality matches', () => {
+    expect(personalityFit([])).toBe('different');
+    expect(personalityFit(['fintech', 'nordics'])).toBe('different');
+  });
+});
+
+describe('FIT_LABELS', () => {
+  it('has a label for every PersonalityFit value', () => {
+    expect(FIT_LABELS).toEqual({
+      strong: 'Strong personality fit',
+      some: 'Some common ground',
+      different: 'Different styles, could complement',
+    });
+  });
+});
+
+describe('sharedPersonality', () => {
+  it('returns matched ids that are personality keywords, in company keyword order', () => {
+    expect(sharedPersonality(company(), ['technical', 'nordics', 'data-driven'])).toEqual(['data-driven', 'technical']);
+  });
+
+  it('returns an empty array when nothing matched is a personality keyword', () => {
+    expect(sharedPersonality(company(), ['nordics', 'fintech'])).toEqual([]);
   });
 });

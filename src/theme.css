@@ -51,21 +51,32 @@ p { margin: 0; }
 .btn {
   font-family: var(--font-display);
   font-weight: 700;
-  box-shadow: inset 0 0 0 1px var(--border);
-  background: transparent;
-  padding: 12px 18px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  cursor: pointer;
-  min-height: 44px;
+  border: 2px solid var(--text);
+  border-radius: 0;
+  background: var(--bg);
   color: var(--text);
+  padding: 12px 18px;
+  cursor: pointer;
+  min-height: 48px;
+  box-shadow: 4px 4px 0 0 var(--accent);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+  white-space: nowrap;
 }
-.btn:hover { box-shadow: inset 0 0 0 1px var(--accent); }
-.btn:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); outline: none; }
-.btn-primary { background: var(--text); color: var(--accent-ink); box-shadow: none; }
-.btn-primary:hover, .btn-primary:focus-visible { background: var(--accent); color: var(--accent-ink); box-shadow: none; outline: none; }
-.btn-ghost { background: transparent; }
-.btn-small { min-height: 44px; padding: 6px 14px; font-size: 0.9rem; display: inline-flex; align-items: center; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (hover: hover) {
+  .btn:hover { box-shadow: 6px 6px 0 0 var(--accent); }
+}
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--accent); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.btn-primary { background: var(--text); color: var(--accent-ink); }
+.btn-ghost { background: var(--bg); color: var(--text); }
+.btn-small { min-height: 44px; padding: 8px 14px; font-size: 0.9rem; }
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
 
 .panel {
   background: linear-gradient(180deg, color-mix(in srgb, var(--tint) 45%, var(--surface)) 0%, var(--surface) 55%);
@@ -92,6 +103,17 @@ p { margin: 0; }
 .card-values .slash { color: var(--accent); }
 .card-meta { font-size: 0.9rem; }
 .card-details { display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
+
+/* Personality fit block */
+.fit { padding: 10px 14px; border-left: 4px solid var(--muted); background: var(--surface-2); }
+.fit-label { font-family: var(--font-display); font-weight: 700; font-size: 1rem; }
+.fit-shared { margin-top: 4px; font-size: 0.85rem; color: var(--muted); }
+.fit-strong { border-left-color: var(--accent); }
+.fit-strong .fit-label { color: var(--accent); }
+.fit-some { border-left-color: var(--text); }
+.fit-different { border-left-color: var(--muted); }
+
+.card-personality, .card-focus { display: flex; flex-direction: column; gap: 6px; }
 .numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 0; }
 .numbers div { background: var(--bg-deep); padding: 10px 12px; }
 .numbers dt { font-size: 0.75rem; color: var(--muted); }
@@ -242,12 +264,18 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 }
 .stamp-like { left: 20px; color: var(--accent); transform: rotate(-12deg); }
 .stamp-pass { right: 20px; color: var(--danger); transform: rotate(12deg); }
-.swipe-actions { display: flex; justify-content: center; gap: 28px; }
+.swipe-actions { display: flex; justify-content: center; gap: 28px; padding: 4px 8px 10px; }
 .round { width: 64px; height: 64px; padding: 0; font-size: 1.5rem; }
-.like { background: var(--text); color: var(--accent-ink); box-shadow: none; }
-.like:hover, .like:focus-visible { background: var(--accent); outline: none; }
-.pass { color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
-.pass:hover, .pass:focus-visible { box-shadow: inset 0 0 0 2px var(--danger); outline: none; }
+.like { background: var(--text); color: var(--accent-ink); border-color: var(--text); box-shadow: 4px 4px 0 0 var(--accent); }
+.like:active { box-shadow: 1px 1px 0 0 var(--accent); }
+@media (hover: hover) {
+  .like:hover { box-shadow: 6px 6px 0 0 var(--accent); }
+}
+.pass { background: var(--bg); color: var(--danger); border-color: var(--danger); box-shadow: 4px 4px 0 0 var(--danger); }
+.pass:active { box-shadow: 1px 1px 0 0 var(--danger); }
+@media (hover: hover) {
+  .pass:hover { box-shadow: 6px 6px 0 0 var(--danger); }
+}
 .empty { display: flex; flex-direction: column; gap: 12px; text-align: center; }
 .overlay {
   position: fixed;
@@ -459,7 +487,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  transform-origin: center bottom;
+  transform-origin: center center; /* shrinks inside the top card: no sliver peeks out */
   animation: under-in 200ms ease;
 }
 @keyframes under-in {

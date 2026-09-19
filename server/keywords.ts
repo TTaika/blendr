@@ -41,11 +41,11 @@ const ROLE_RULES: Record<Role, string[]> = {
   ],
   investor: [
     'You are profiling an investor so startups at Slush can be matched to them.',
-    'Pick 1-4 sector keywords from the thesis.',
+    'Pick sector keywords only if the answers explicitly name sectors; otherwise pick none.',
     'Pick 1-2 business model keywords the investor prefers.',
     'Pick 1-3 geography keywords from the regions answer.',
     "Pick the involvement keywords matching the investor's answers to the involvement question (one per chosen option).",
-    'Pick 2-3 personality keywords from the three 1-10 scale answers (pressure, transparency, leadership) and what makes them say yes to a founder.',
+    'Pick 2-3 personality keywords from what they value in a startup, the three 1-10 scale answers (pressure, transparency, risk) and what makes them say yes to a founder.',
     "The summary describes the investor's focus, max 100 characters.",
   ],
 };
@@ -114,6 +114,15 @@ export async function generateKeywords(
   for (const id of chosenIds) {
     if (isKeywordId(id) && !parsed.keywords.some((k) => k.id === id)) {
       parsed.keywords.push({ id, reason: 'You chose this in the questionnaire.' });
+    }
+  }
+
+  // Same for the investor's valuesWanted answer; harmless for founders, who have no such answer.
+  const valuesWanted = answers.valuesWanted;
+  const chosenValueIds = Array.isArray(valuesWanted) ? valuesWanted : typeof valuesWanted === 'string' ? [valuesWanted] : [];
+  for (const id of chosenValueIds) {
+    if (isKeywordId(id) && !parsed.keywords.some((k) => k.id === id)) {
+      parsed.keywords.push({ id, reason: 'You value this in a startup.' });
     }
   }
   return { ...parsed, websiteUsed: website !== null };

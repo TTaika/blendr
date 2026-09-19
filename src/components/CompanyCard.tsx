@@ -1,13 +1,14 @@
 import { Fragment } from 'react';
 import { formatRange } from '../../shared/questions';
-import { stageLabel } from '../../shared/taxonomy';
+import { getKeyword, stageLabel } from '../../shared/taxonomy';
 import type { Company } from '../../shared/types';
-import { topKeywords } from '../lib/matching';
+import { FIT_LABELS, sharedPersonality, topKeywords, type PersonalityFit } from '../lib/matching';
 import { KeywordList } from './KeywordList';
 
 export interface CompanyCardProps {
   company: Company;
   matched?: string[];
+  fit?: PersonalityFit;
   showContact?: boolean;
   allKeywords?: boolean;
 }
@@ -22,16 +23,23 @@ function Detail({ title, text }: { title: string; text: string }) {
   );
 }
 
-export function CompanyCard({ company, matched = [], showContact = false, allKeywords = false }: CompanyCardProps) {
-  const keywords = topKeywords(company, matched, allKeywords ? company.keywords.length : 4);
+const labelOf = (id: string) => getKeyword(id)?.label ?? id;
+
+export function CompanyCard({ company, matched = [], fit, showContact = false, allKeywords = false }: CompanyCardProps) {
   const { contact } = company;
+  const personalityKeywords = company.keywords.filter((k) => getKeyword(k.id)?.category === 'personality');
+  const nonPersonalityKeywords = company.keywords.filter((k) => getKeyword(k.id)?.category !== 'personality');
+  const focusKeywords = topKeywords(
+    { ...company, keywords: nonPersonalityKeywords },
+    matched,
+    allKeywords ? nonPersonalityKeywords.length : 4,
+  );
+  const sharedTraits = sharedPersonality(company, matched);
 
   return (
     <article className="card" aria-label={company.name}>
       <header className="card-head">
-        <div className="row">
-          <h2>{company.name}</h2>
-        </div>
+        <h2>{company.name}</h2>
         <p className="card-values">
           {company.values.map((value, i) => (
             <Fragment key={value}>
@@ -44,10 +52,27 @@ export function CompanyCard({ company, matched = [], showContact = false, allKey
             </Fragment>
           ))}
         </p>
+        {fit && (
+          <div className={`fit fit-${fit}`}>
+            <p className="fit-label">{FIT_LABELS[fit]}</p>
+            {sharedTraits.length > 0 && (
+              <p className="fit-shared">You both: {sharedTraits.map(labelOf).join(' · ')}</p>
+            )}
+          </div>
+        )}
+        {personalityKeywords.length > 0 && (
+          <div className="card-personality">
+            <h3>Team personality</h3>
+            <KeywordList keywords={personalityKeywords} matchedIds={matched} />
+          </div>
+        )}
         <p className="card-meta muted">
           {stageLabel(company.stage)} · raising {formatRange(company.raise)}
         </p>
-        <KeywordList keywords={keywords} matchedIds={matched} />
+        <div className="card-focus">
+          <h3>Focus</h3>
+          <KeywordList keywords={focusKeywords} matchedIds={matched} />
+        </div>
       </header>
 
       <section className="card-details">

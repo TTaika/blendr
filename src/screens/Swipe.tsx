@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import type { Company, FeedEntry } from '../../shared/types';
 import { CompanyCard } from '../components/CompanyCard';
+import { personalityFit } from '../lib/matching';
 
 export const SWIPE_THRESHOLD = 100;
 
@@ -194,13 +195,17 @@ export function Swipe({
                 aria-hidden="true"
                 inert
                 style={{
-                  transform: `translateY(${14 * (1 - p)}px) scale(${0.94 + 0.06 * p})`,
+                  transform: `scale(${0.94 + 0.06 * p})`,
                   opacity: 0.55 + 0.45 * p,
                   transition: dragging ? 'none' : `transform ${exitMs}ms ${EXIT_EASING}, opacity ${exitMs}ms ${EXIT_EASING}`,
                 }}
               >
                 <div className="swipe-scroll">
-                  <CompanyCard company={nextCompany} matched={next.matched} />
+                  <CompanyCard
+                    company={nextCompany}
+                    matched={next.matched}
+                    fit={next.score !== undefined ? personalityFit(next.matched) : undefined}
+                  />
                 </div>
               </div>
             )}
@@ -218,7 +223,11 @@ export function Swipe({
               onPointerCancel={onPointerCancel}
             >
               <div className="swipe-scroll">
-                <CompanyCard company={company} matched={top.matched} />
+                <CompanyCard
+                  company={company}
+                  matched={top.matched}
+                  fit={top.score !== undefined ? personalityFit(top.matched) : undefined}
+                />
               </div>
               <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
                 MATCH
