@@ -1,0 +1,25 @@
+[Screening]:
+  Founder or investor --> (Choice) --> Opening the right screening portal
+    User chooses to test as founder or investor
+  Opening the right screening portal --> (Filling the questions) --> User's answers
+    User answers to set questions and / or links company website etc according to the role
+  Gemini API --> (API return) --> Profile preview
+    API returns keywords with additional information that is linked to the keyword.
+  User's answers --> (API call) --> Gemini API
+    App sends user answers with set rules to Gemini API
+  Profile preview <-> (Edits) <-> User
+    User deletes / adds keywords if they notice that AI has hallucinated or missed something
+
+[SWIPING]:
+  Matcher --> (Matched data) --> Swiping
+    Sends list that has the best matched companies in order
+  Swiping <-> (Liking) <-> User
+    User can like the best companies. Those companies are saved for later.
+
+[CONNECTION]:
+  [Liked companies]
+
+Profile preview --> (Data) --> Matcher
+    Done user profiles are sent to the matcher
+Swiping --> (Likes) --> Liked companies
+    Liked companies are stored for connecting
