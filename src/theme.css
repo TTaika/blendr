@@ -321,6 +321,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   font-size: 0.75rem;
   text-decoration: underline;
   cursor: pointer;
+  /* Above the swipe screen's full-width action row (z-index 1), below dialogs (10) and the match burst (20);
+     without it the row swallowed taps on phones, where it spans the whole width. */
+  z-index: 6;
 }
 
 /* ==========================================================================
