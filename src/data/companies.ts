@@ -7,7 +7,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'northlight-grid',
     name: 'Northlight Grid',
-    values: ['Grid reliability', 'Engineering rigor', 'Customer trust'],
+    values: ['Sustainability', 'Data-driven decisions', 'Craftsmanship'],
     stage: 'seed',
     raise: 't-2m-5m',
     keywords: [
@@ -33,7 +33,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'kide-health',
     name: 'Kide Health',
-    values: ['Clinical accuracy', 'Nurse empowerment', 'Patient safety'],
+    values: ['Customer obsession', 'Integrity', 'Social impact'],
     stage: 'series-a',
     raise: 't-5m-15m',
     keywords: [
@@ -59,7 +59,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'ledgerleaf',
     name: 'Ledgerleaf',
-    values: ['Automation first', 'Small business trust', 'European compliance'],
+    values: ['Speed of execution', 'Customer obsession', 'Integrity'],
     stage: 'seed',
     raise: 't-500k-2m',
     keywords: [
@@ -85,7 +85,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'frostbyte-robotics',
     name: 'Frostbyte Robotics',
-    values: ['Operational safety', 'Reliability at scale', 'Field-tested hardware'],
+    values: ['Craftsmanship', 'Customer obsession', 'Long-term thinking'],
     stage: 'series-a',
     raise: 't-5m-15m',
     keywords: [
@@ -111,7 +111,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'loop-pantry',
     name: 'Loop Pantry',
-    values: ['Zero food waste', 'Community trust', 'Everyday affordability'],
+    values: ['Sustainability', 'Social impact', 'Frugality'],
     stage: 'pre-seed',
     raise: 't-under-500k',
     keywords: [
@@ -137,7 +137,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'quietmind',
     name: 'Quietmind',
-    values: ['Clinical rigor', 'Compassionate care', 'Evidence-based design'],
+    values: ['Integrity', 'Customer obsession', 'Data-driven decisions'],
     stage: 'seed',
     raise: 't-500k-2m',
     keywords: [
@@ -163,7 +163,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'shieldpath',
     name: 'Shieldpath',
-    values: ['Security awareness', 'Real-world realism', 'Continuous improvement'],
+    values: ['Data-driven decisions', 'Integrity', 'Craftsmanship'],
     stage: 'series-a',
     raise: 't-5m-15m',
     keywords: [
@@ -189,7 +189,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'tundra-games',
     name: 'Tundra Games',
-    values: ['Playful design', 'Social connection', 'Inclusive fun'],
+    values: ['Bold innovation', 'Collaboration', 'Diversity & inclusion'],
     stage: 'seed',
     raise: 't-2m-5m',
     keywords: [
@@ -215,7 +215,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'birchbase',
     name: 'Birchbase',
-    values: ['Operational simplicity', 'Transparency', 'Long-term reliability'],
+    values: ['Transparency', 'Long-term thinking', 'Customer obsession'],
     stage: 'pre-seed',
     raise: 't-under-500k',
     keywords: [
@@ -241,7 +241,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'mycora',
     name: 'Mycora',
-    values: ['Scientific rigor', 'Sustainable production', 'Great taste'],
+    values: ['Sustainability', 'Craftsmanship', 'Long-term thinking'],
     stage: 'series-b-plus',
     raise: 't-15m-plus',
     keywords: [
@@ -267,7 +267,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'routeflow',
     name: 'Routeflow',
-    values: ['Energy efficiency', 'Fleet reliability', 'Cost savings'],
+    values: ['Sustainability', 'Data-driven decisions', 'Frugality'],
     stage: 'seed',
     raise: 't-2m-5m',
     keywords: [
@@ -293,7 +293,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'learnloop',
     name: 'Learnloop',
-    values: ['Learner success', 'Accessible tutoring', 'Trade expertise'],
+    values: ['Customer obsession', 'Diversity & inclusion', 'Craftsmanship'],
     stage: 'pre-seed',
     raise: 't-500k-2m',
     keywords: [

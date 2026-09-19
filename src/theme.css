@@ -119,6 +119,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .option { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); cursor: pointer; font-size: 0.9rem; }
 .option input { accent-color: var(--accent); margin: 0; }
 .option-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.option-disabled { opacity: 0.4; cursor: not-allowed; }
 .add-keyword { display: flex; flex-direction: column; gap: 8px; }
 .add-keyword select { flex: 1; }
 /* Connect */
@@ -204,7 +205,6 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .progress span { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
 .profile-card { gap: 20px; }
 .profile-card header { display: flex; flex-direction: column; gap: 6px; }
-.stamp-like { color: var(--accent); }
 .reset {
   position: fixed;
   left: calc(12px + env(safe-area-inset-left));

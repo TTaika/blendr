@@ -37,7 +37,7 @@ Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for
 
 ## Replacing the draft content
 
-- Questions: `shared/questions.ts`. Keep these ids, which the code reads: investor `investorName`, `fundName`, `stages`, `tickets`, `thesis`, `regions`, `founderFit`; founder `companyName`, `values`, `stage`, `raise`, `problem`, `solution`, `traction`, `team`, `whyInvest`; both `involvement` and `workStyle`. `involvement` option ids must be taxonomy ids. Neither role has a website question; founders give their company's three main values (`values`, an array of exactly 3 short strings) instead of a one-liner.
+- Questions: `shared/questions.ts`. Keep these ids, which the code reads: investor `investorName`, `fundName`, `stages`, `tickets`, `thesis`, `regions`, `founderFit`; founder `companyName`, `values`, `stage`, `raise`, `problem`, `solution`, `traction`, `team`, `whyInvest`; both `involvement` and `workStyle`. `involvement` option ids must be taxonomy ids. Neither role has a website question; founders pick their company's three main values (`values`, a multiple-choice list of values with at most 3 picks) instead of a one-liner.
 - Test companies: `src/data/companies.ts`. `npm test` validates the format.
 - Keyword taxonomy: `shared/taxonomy.ts`
 - Pitch videos: put an `.mp4` in `public/videos/` and set `videoUrl: '/videos/<file>.mp4'` on the company.

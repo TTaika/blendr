@@ -136,35 +136,10 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
   const id = `q-${q.id}`;
   const label = q.required ? q.label : `${q.label} (optional)`;
 
-  if (q.kind === 'values') {
-    const existing = Array.isArray(value) ? value : [];
-    const vals = [0, 1, 2].map((i) => existing[i] ?? '');
-    return (
-      <fieldset className="field" aria-invalid={invalid || undefined}>
-        <legend>{label}</legend>
-        {q.help && <p className="help">{q.help}</p>}
-        {vals.map((v, i) => (
-          <label key={i} className="value-input">
-            {`Value ${i + 1}`}
-            <input
-              type="text"
-              maxLength={q.maxLength}
-              value={v}
-              aria-invalid={invalid || undefined}
-              onChange={(e) => {
-                const next = [...vals];
-                next[i] = e.target.value;
-                onChange(next);
-              }}
-            />
-          </label>
-        ))}
-      </fieldset>
-    );
-  }
-
   if (q.kind === 'single' || q.kind === 'multi') {
     const selected = Array.isArray(value) ? value : value ? [value] : [];
+    const max = q.kind === 'multi' ? q.maxSelections : undefined;
+    const atMax = max !== undefined && selected.length >= max;
     return (
       <fieldset className="field" aria-invalid={invalid || undefined}>
         <legend>{label}</legend>
@@ -172,16 +147,29 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
         <div className="options">
           {(q.options ?? []).map((o) => {
             const checked = selected.includes(o.id);
+            const disabled = q.kind === 'multi' && atMax && !checked;
             const next: AnswerValue =
               q.kind === 'single' ? o.id : checked ? selected.filter((s) => s !== o.id) : [...selected, o.id];
             return (
-              <label key={o.id} className={checked ? 'option option-on' : 'option'}>
-                <input type={q.kind === 'single' ? 'radio' : 'checkbox'} name={id} value={o.id} checked={checked} onChange={() => onChange(next)} />
+              <label key={o.id} className={[checked ? 'option option-on' : 'option', disabled ? 'option-disabled' : ''].filter(Boolean).join(' ')}>
+                <input
+                  type={q.kind === 'single' ? 'radio' : 'checkbox'}
+                  name={id}
+                  value={o.id}
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => onChange(next)}
+                />
                 {o.label}
               </label>
             );
           })}
         </div>
+        {max !== undefined && (
+          <p className="help">
+            {selected.length} / {max} selected
+          </p>
+        )}
       </fieldset>
     );
   }

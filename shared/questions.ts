@@ -1,7 +1,7 @@
 import { STAGES, TICKETS } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'values';
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi';
 
 export interface QuestionOption {
   id: string;
@@ -15,6 +15,7 @@ export interface Question {
   kind: QuestionKind;
   required: boolean;
   maxLength?: number;
+  maxSelections?: number;
   options?: QuestionOption[];
 }
 
@@ -26,9 +27,26 @@ const INVOLVEMENT_OPTIONS: QuestionOption[] = [
   { id: 'light-touch', label: 'Light-touch: available when needed' },
 ];
 
+export const VALUE_OPTIONS: QuestionOption[] = [
+  { id: 'transparency', label: 'Transparency' },
+  { id: 'speed', label: 'Speed of execution' },
+  { id: 'customer-obsession', label: 'Customer obsession' },
+  { id: 'sustainability', label: 'Sustainability' },
+  { id: 'integrity', label: 'Integrity' },
+  { id: 'innovation', label: 'Bold innovation' },
+  { id: 'collaboration', label: 'Collaboration' },
+  { id: 'ownership', label: 'Ownership' },
+  { id: 'craftsmanship', label: 'Craftsmanship' },
+  { id: 'inclusion', label: 'Diversity & inclusion' },
+  { id: 'frugality', label: 'Frugality' },
+  { id: 'long-term', label: 'Long-term thinking' },
+  { id: 'data-driven', label: 'Data-driven decisions' },
+  { id: 'impact', label: 'Social impact' },
+];
+
 export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60 },
-  { id: 'values', label: "List your company's three main values", help: 'Up to 30 characters each.', kind: 'values', required: true, maxLength: 30 },
+  { id: 'values', label: "Choose your company's three main values", help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: VALUE_OPTIONS },
   { id: 'stage', label: 'Current funding stage', kind: 'single', required: true, options: [...STAGES] },
   { id: 'raise', label: 'How much are you raising?', kind: 'single', required: true, options: [...TICKETS] },
   { id: 'problem', label: 'What problem are you solving?', kind: 'longtext', required: true, maxLength: 400 },
@@ -61,16 +79,10 @@ function isEmpty(value: AnswerValue | undefined): boolean {
   return Array.isArray(value) ? value.length === 0 : value.trim() === '';
 }
 
-/** A values answer is complete only once it has exactly 3 entries, all non-empty after trimming. */
-function isValuesComplete(value: AnswerValue | undefined): boolean {
-  return Array.isArray(value) && value.length === 3 && value.every((v) => v.trim() !== '');
-}
-
 export function missingRequired(role: Role, answers: Answers): Question[] {
   return questionsFor(role).filter((q) => {
     if (!q.required) return false;
-    const value = answers[q.id];
-    return q.kind === 'values' ? !isValuesComplete(value) : isEmpty(value);
+    return isEmpty(answers[q.id]);
   });
 }
 
