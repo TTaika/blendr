@@ -2,8 +2,7 @@
   "role": "founder",
   "answers": {
     "companyName": "Northlight Grid",
-    "website": "",
-    "oneLiner": "Software that lets building owners sell flexible power back to the grid.",
+    "values": ["Grid reliability", "Engineering rigor", "Customer trust"],
     "stage": "seed",
     "raise": "t-2m-5m",
     "problem": "Grids need flexibility to absorb wind and solar, but buildings with controllable heating sit idle.",

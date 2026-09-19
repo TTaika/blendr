@@ -6,7 +6,7 @@ import { KEYWORD_SCHEMA, MAX_KEYWORDS, buildPrompt, generateKeywords, parseKeywo
 const founderAnswers: Answers = {
   companyName: 'Acme Grid',
   website: 'acme.example',
-  oneLiner: 'Grid flexibility software.',
+  values: ['Grid reliability', 'Engineering rigor', 'Customer trust'],
   stage: 'seed',
   raise: 't-2m-5m',
   problem: 'Grids lack flexibility.',
@@ -25,7 +25,7 @@ describe('buildPrompt', () => {
     for (const id of KEYWORD_IDS) expect(prompt).toContain(`- ${id} (`);
     expect(prompt).toContain('Q: Current funding stage\nA: Seed');
     expect(prompt).toContain('Q: How much are you raising?\nA: €2M – €5M');
-    expect(prompt).toContain('Grid flexibility software.');
+    expect(prompt).toContain("Q: List your company's three main values\nA: Grid reliability, Engineering rigor, Customer trust");
     expect(prompt).toContain('Website text (truncated):\nWe are Acme Grid.');
   });
 
