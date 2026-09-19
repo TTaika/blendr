@@ -53,7 +53,7 @@ export function Connect({ companies, onBackToSwiping }: ConnectProps) {
               <button type="button" className="liked-item" onClick={() => setSelectedId(c.id)}>
                 <span className="liked-name">{c.name}</span>
                 <span className="liked-meta muted">
-                  {stageLabel(c.stage)} · {c.values.join(' · ')}
+                  {stageLabel(c.stage)} / {c.values.join(' / ')}
                 </span>
               </button>
             </li>

@@ -23,7 +23,6 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
 
   const question = questions[step];
   const isLast = step === total - 1;
-  const pct = ((step + 1) / total) * 100;
 
   function isCurrentMissing(q: Question) {
     return missingRequired(role, answers).some((m) => m.id === q.id);
@@ -83,7 +82,9 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
         aria-valuenow={step + 1}
         aria-label="Question progress"
       >
-        <span style={{ width: `${pct}%` }} />
+        {questions.map((q, i) => (
+          <span key={q.id} className={i <= step ? 'progress-seg on' : 'progress-seg'} />
+        ))}
       </div>
       <form
         className="form"
