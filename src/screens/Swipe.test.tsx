@@ -46,6 +46,16 @@ describe('Swipe', () => {
     expect(screen.queryByRole('article', { name: 'Routeflow' })).not.toBeInTheDocument();
   });
 
+  it('renders the stamp texts MATCH and PASS', () => {
+    const { unmount } = setup();
+    const container = screen.getByRole('main').parentElement as HTMLElement;
+    const likeStamp = container.querySelector('.stamp-like');
+    const passStamp = container.querySelector('.stamp-pass');
+    expect(likeStamp?.textContent).toBe('MATCH');
+    expect(passStamp?.textContent).toBe('PASS');
+    unmount();
+  });
+
   it('likes and passes with the buttons', async () => {
     const { user, onLike, onDiscard } = setup();
     await user.click(screen.getByRole('button', { name: 'Like' }));

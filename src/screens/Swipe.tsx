@@ -129,7 +129,7 @@ export function Swipe({
               <CompanyCard company={company} score={top.score} matched={top.matched} />
             </div>
             <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
-              LIKE
+              MATCH
             </span>
             <span className="stamp stamp-pass" aria-hidden="true" style={{ opacity: stampOpacity(-1) }}>
               PASS
