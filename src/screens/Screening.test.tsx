@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
+import { useState } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { Answers, KeywordResult } from '../../shared/types';
-import { Screening } from './Screening';
+import type { Answers, KeywordResult, Role } from '../../shared/types';
+import { Screening, type ScreeningProps } from './Screening';
 
 const founderAnswers: Answers = {
   companyName: 'Acme',
@@ -20,28 +21,101 @@ const founderAnswers: Answers = {
 };
 const result: KeywordResult = { summary: 'Acme does X', keywords: [{ id: 'fintech', reason: 'r' }], websiteUsed: false };
 
-function setup(props: Partial<Parameters<typeof Screening>[0]> = {}) {
+function setup(props: Partial<ScreeningProps> = {}) {
   const handlers = { onAnswer: vi.fn(), onGenerated: vi.fn(), onManual: vi.fn(), generate: vi.fn(async () => result) };
-  render(<Screening role="founder" answers={{}} {...handlers} {...props} />);
-  return { user: userEvent.setup(), ...handlers, ...props };
+  const utils = render(<Screening role="founder" answers={{}} {...handlers} {...props} />);
+  return { user: userEvent.setup(), ...handlers, ...props, ...utils };
+}
+
+interface ControlledProps {
+  role: Role;
+  initial?: Answers;
+  generate?: ScreeningProps['generate'];
+  onGenerated?: ScreeningProps['onGenerated'];
+}
+
+function Controlled({ role, initial = {}, generate, onGenerated = vi.fn() }: ControlledProps) {
+  const [answers, setAnswers] = useState<Answers>(initial);
+  return (
+    <Screening
+      role={role}
+      answers={answers}
+      onAnswer={(id, value) => setAnswers((a) => ({ ...a, [id]: value }))}
+      onGenerated={onGenerated}
+      onManual={vi.fn()}
+      generate={generate}
+    />
+  );
+}
+
+/** Clicks Next repeatedly until the button reads "Generate my profile" (only safe when every step is already answered). */
+async function goToLastStep(user: UserEvent) {
+  while (screen.queryByRole('button', { name: 'Next' })) {
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+  }
 }
 
 describe('Screening', () => {
-  it('renders the questions for the role', () => {
+  it('shows only the first founder question, with progress 1 / 11', () => {
+    setup({ role: 'founder' });
+    expect(screen.getByRole('heading', { name: 'Tell us about your startup' })).toBeInTheDocument();
+    expect(screen.getByText('1 / 11')).toBeInTheDocument();
+    expect(screen.getByLabelText('Company name')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: "List your company's three main values" })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+    const bar = screen.getByRole('progressbar', { name: 'Question progress' });
+    expect(bar).toHaveAttribute('aria-valuemin', '1');
+    expect(bar).toHaveAttribute('aria-valuemax', '11');
+    expect(bar).toHaveAttribute('aria-valuenow', '1');
+  });
+
+  it('shows only the first investor question, with progress 1 / 9', () => {
     setup({ role: 'investor' });
     expect(screen.getByRole('heading', { name: 'Tell us about your investing' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Fund or firm')).toBeInTheDocument();
-    expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Which stages do you invest in?' })).toBeInTheDocument();
+    expect(screen.getByText('1 / 9')).toBeInTheDocument();
+    expect(screen.getByLabelText('Your name')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Fund or firm')).not.toBeInTheDocument();
+    const bar = screen.getByRole('progressbar', { name: 'Question progress' });
+    expect(bar).toHaveAttribute('aria-valuemax', '9');
   });
 
-  it('has no website field for founders either', () => {
-    setup({ role: 'founder' });
-    expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
+  it('blocks Next on an empty required question and shows an alert, staying on step 1', async () => {
+    const { user } = setup({ role: 'founder' });
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
+    expect(screen.getByText('1 / 11')).toBeInTheDocument();
+    expect(screen.getByLabelText('Company name')).toHaveAttribute('aria-invalid', 'true');
   });
 
-  it('renders the values fieldset with three labelled inputs', () => {
-    setup({ role: 'founder' });
+  it('advances to the next question once answered, and updates the progress bar', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" />);
+    await user.type(screen.getByLabelText('Company name'), 'Acme');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('2 / 11')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: "List your company's three main values" })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    const bar = screen.getByRole('progressbar', { name: 'Question progress' });
+    expect(bar).toHaveAttribute('aria-valuenow', '2');
+  });
+
+  it('goes back to the previous question and keeps its value, clearing the error', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('2 / 11')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByText('1 / 11')).toBeInTheDocument();
+    expect(screen.getByLabelText('Company name')).toHaveValue('Acme');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+  });
+
+  it('renders the values fieldset with three labelled inputs once reached', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
     const group = screen.getByRole('group', { name: "List your company's three main values" });
     expect(within(group).getByLabelText('Value 1')).toBeInTheDocument();
     expect(within(group).getByLabelText('Value 2')).toBeInTheDocument();
@@ -49,47 +123,44 @@ describe('Screening', () => {
   });
 
   it('reports a 3-element array when typing into a values input', async () => {
-    const { user, onAnswer } = setup({ role: 'founder' });
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(
+      <Screening
+        role="founder"
+        answers={{ companyName: 'Acme' }}
+        onAnswer={onAnswer}
+        onGenerated={vi.fn()}
+        onManual={vi.fn()}
+        generate={vi.fn(async () => result)}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.type(screen.getByLabelText('Value 2'), 'X');
     expect(onAnswer).toHaveBeenLastCalledWith('values', ['', 'X', '']);
   });
 
-  it('lists the values question in the alert when it is incomplete', async () => {
-    const { user } = setup({
-      role: 'founder',
-      answers: { ...founderAnswers, values: ['A', '', 'C'] },
-    });
-    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
-    expect(screen.getByRole('alert')).toHaveTextContent("List your company's three main values");
-  });
-
-  it('reports text, single-choice and multi-choice answers', async () => {
-    const { user, onAnswer } = setup();
-    await user.type(screen.getByLabelText('Company name'), 'A');
-    expect(onAnswer).toHaveBeenLastCalledWith('companyName', 'A');
-    await user.click(screen.getByLabelText('Seed'));
-    expect(onAnswer).toHaveBeenLastCalledWith('stage', 'seed');
-  });
-
-  it('toggles multi-choice options', async () => {
-    const { user, onAnswer } = setup({ role: 'investor', answers: { stages: ['seed'] } });
+  it('toggles multi-choice options for the investor stages question', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="investor" initial={{ investorName: 'Sara', fundName: 'Birch', stages: ['seed'] }} />);
+    await user.click(screen.getByRole('button', { name: 'Next' })); // -> fundName
+    await user.click(screen.getByRole('button', { name: 'Next' })); // -> stages
+    expect(screen.getByRole('group', { name: 'Which stages do you invest in?' })).toBeInTheDocument();
     await user.click(screen.getByLabelText('Series A'));
-    expect(onAnswer).toHaveBeenLastCalledWith('stages', ['seed', 'series-a']);
+    expect(screen.getByLabelText('Series A')).toBeChecked();
     await user.click(screen.getByLabelText('Seed'));
-    expect(onAnswer).toHaveBeenLastCalledWith('stages', []);
+    expect(screen.getByLabelText('Seed')).not.toBeChecked();
   });
 
-  it('lists unanswered required questions instead of calling the API', async () => {
-    const { user, generate } = setup({ answers: { companyName: 'Acme' } });
-    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
-    expect(screen.getByRole('alert')).toHaveTextContent("Please answer: List your company's three main values");
-    expect(generate).not.toHaveBeenCalled();
-  });
-
-  it('calls the API, shows progress and hands over the result', async () => {
+  it('reaches the last step, calls generate(role, answers), shows loading, then onGenerated', async () => {
     let resolve!: (r: KeywordResult) => void;
     const generate = vi.fn(() => new Promise<KeywordResult>((r) => { resolve = r; }));
-    const { user, onGenerated } = setup({ answers: founderAnswers, generate });
+    const onGenerated = vi.fn();
+    const user = userEvent.setup();
+    render(<Screening role="founder" answers={founderAnswers} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={vi.fn()} generate={generate} />);
+    await goToLastStep(user);
+    expect(screen.getByText('11 / 11')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate my profile' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
     expect(generate).toHaveBeenCalledWith('founder', founderAnswers);
     expect(screen.getByRole('button', { name: 'Analysing your answers…' })).toBeDisabled();
@@ -97,9 +168,32 @@ describe('Screening', () => {
     await waitFor(() => expect(onGenerated).toHaveBeenCalledWith(result));
   });
 
+  it('runs a backstop missingRequired check on generate and jumps to the first missing question', async () => {
+    const generate = vi.fn(async () => result);
+    const onGenerated = vi.fn();
+    const user = userEvent.setup();
+    const { stage: _stage, ...withoutStage } = founderAnswers;
+    const { rerender } = render(
+      <Screening role="founder" answers={founderAnswers} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={vi.fn()} generate={generate} />,
+    );
+    await goToLastStep(user);
+    // Simulate an earlier answer becoming invalid without stepping back through it.
+    rerender(
+      <Screening role="founder" answers={withoutStage} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={vi.fn()} generate={generate} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    expect(screen.getByText('3 / 11')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it('offers retry and manual keywords when the API fails', async () => {
     const generate = vi.fn().mockRejectedValueOnce(new Error('Keyword generation failed. Please retry.')).mockResolvedValueOnce(result);
-    const { user, onGenerated, onManual } = setup({ answers: founderAnswers, generate });
+    const onGenerated = vi.fn();
+    const onManual = vi.fn();
+    const user = userEvent.setup();
+    render(<Screening role="founder" answers={founderAnswers} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={onManual} generate={generate} />);
+    await goToLastStep(user);
     await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
     expect(await screen.findByText('Keyword generation failed. Please retry.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Add keywords manually' }));
@@ -107,5 +201,13 @@ describe('Screening', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(onGenerated).toHaveBeenCalledWith(result));
     expect(generate).toHaveBeenCalledTimes(2);
+  });
+
+  it('submits the current step via Enter (form submit) like the primary button', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
+    screen.getByLabelText('Company name').focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByText('2 / 11')).toBeInTheDocument();
   });
 });

@@ -15,14 +15,26 @@ export interface ScreeningProps {
 type Status = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error'; message: string };
 
 export function Screening({ role, answers, onAnswer, onGenerated, onManual, generate = requestKeywords }: ScreeningProps) {
+  const questions = questionsFor(role);
+  const total = questions.length;
+  const [step, setStep] = useState(0);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
-  const [missing, setMissing] = useState<Question[]>([]);
-  const missingIds = new Set(missing.map((q) => q.id));
+  const [invalidStep, setInvalidStep] = useState(false);
 
-  async function submit() {
+  const question = questions[step];
+  const isLast = step === total - 1;
+  const pct = ((step + 1) / total) * 100;
+
+  function isCurrentMissing(q: Question) {
+    return missingRequired(role, answers).some((m) => m.id === q.id);
+  }
+
+  async function runGenerate() {
     const stillMissing = missingRequired(role, answers);
-    setMissing(stillMissing);
     if (stillMissing.length > 0) {
+      const firstIndex = questions.findIndex((q) => q.id === stillMissing[0].id);
+      setStep(firstIndex < 0 ? 0 : firstIndex);
+      setInvalidStep(true);
       setStatus({ kind: 'idle' });
       return;
     }
@@ -36,26 +48,55 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
     }
   }
 
+  function goNext() {
+    if (isCurrentMissing(question)) {
+      setInvalidStep(true);
+      return;
+    }
+    setInvalidStep(false);
+    if (isLast) {
+      void runGenerate();
+    } else {
+      setStep((s) => s + 1);
+    }
+  }
+
+  function goBack() {
+    setInvalidStep(false);
+    setStep((s) => Math.max(0, s - 1));
+  }
+
   return (
     <main className="screen">
       <header>
         <p className="muted">{role === 'founder' ? 'Founder profile' : 'Investor profile'}</p>
         <h1>Tell us about {role === 'founder' ? 'your startup' : 'your investing'}</h1>
       </header>
+      <p className="muted">
+        {step + 1} / {total}
+      </p>
+      <div
+        className="progress"
+        role="progressbar"
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-valuenow={step + 1}
+        aria-label="Question progress"
+      >
+        <span style={{ width: `${pct}%` }} />
+      </div>
       <form
         className="form"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          void submit();
+          goNext();
         }}
       >
-        {questionsFor(role).map((q) => (
-          <Field key={q.id} question={q} value={answers[q.id]} invalid={missingIds.has(q.id)} onChange={(v) => onAnswer(q.id, v)} />
-        ))}
-        {missing.length > 0 && (
+        <Field key={question.id} question={question} value={answers[question.id]} invalid={invalidStep} onChange={(v) => onAnswer(question.id, v)} />
+        {invalidStep && (
           <p className="error" role="alert">
-            Please answer: {missing.map((q) => q.label).join(', ')}
+            Please answer this question to continue.
           </p>
         )}
         {status.kind === 'error' ? (
@@ -67,9 +108,17 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
             </div>
           </div>
         ) : (
-          <button type="submit" className="btn btn-primary" disabled={status.kind === 'loading'}>
-            {status.kind === 'loading' ? 'Analysing your answers…' : 'Generate my profile'}
-          </button>
+          <div className="row">
+            {step > 0 && (
+              <button type="button" className="btn" onClick={goBack}>
+                Back
+              </button>
+            )}
+            <span className="spacer" />
+            <button type="submit" className="btn btn-primary" disabled={status.kind === 'loading'}>
+              {isLast ? (status.kind === 'loading' ? 'Analysing your answers…' : 'Generate my profile') : 'Next'}
+            </button>
+          </div>
         )}
       </form>
     </main>

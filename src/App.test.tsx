@@ -50,6 +50,14 @@ const preload = (state: Partial<DemoState>) =>
 const saved = () => JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null') as DemoState;
 const topCardName = () => screen.getAllByRole('article')[0].getAttribute('aria-label');
 
+/** Clicks Next through the step-by-step screening flow until Generate my profile appears, then clicks it. */
+async function generateProfile(user: ReturnType<typeof userEvent.setup>) {
+  while (screen.queryByRole('button', { name: 'Next' })) {
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+  }
+  await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+}
+
 describe('App', () => {
   it('starts on role select and opens the matching questionnaire', async () => {
     const user = userEvent.setup();
@@ -65,7 +73,7 @@ describe('App', () => {
     const generate = vi.fn(async () => investorResult);
     render(<App generate={generate} swipeExitMs={0} />);
 
-    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    await generateProfile(user);
     expect(generate).toHaveBeenCalledWith('investor', investorAnswers);
     expect(await screen.findByRole('heading', { name: 'Sara Lind · Birch Ventures' })).toBeInTheDocument();
 
@@ -110,7 +118,7 @@ describe('App', () => {
     }));
     render(<App generate={generate} />);
 
-    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    await generateProfile(user);
     await user.click(await screen.findByRole('button', { name: 'Submit profile' }));
     expect(screen.getByRole('heading', { name: "You're live!" })).toBeInTheDocument();
     expect(screen.getByRole('article', { name: 'Acme' })).toBeInTheDocument();
@@ -132,7 +140,7 @@ describe('App', () => {
       websiteUsed: false,
     }));
     render(<App generate={generate} />);
-    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    await generateProfile(user);
     await user.click(await screen.findByRole('button', { name: 'Submit profile' }));
     expect(screen.getAllByRole('button', { name: 'Start over' })).toHaveLength(1);
   });
@@ -145,7 +153,7 @@ describe('App', () => {
     });
     render(<App generate={generate} />);
 
-    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    await generateProfile(user);
     await user.click(await screen.findByRole('button', { name: 'Add keywords manually' }));
     expect(screen.getByText('No keywords yet. Add at least one below.')).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Add a keyword'), 'fintech');
