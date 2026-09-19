@@ -23,7 +23,7 @@ describe('FounderPreview', () => {
     const { container } = render(<FounderPreview profile={profile} onStartOver={vi.fn()} />);
     expect(screen.getByRole('heading', { name: "You're live!" })).toBeInTheDocument();
     expect(screen.getByRole('article', { name: 'Acme' })).toBeInTheDocument();
-    expect(screen.getByText('Transparency · Speed of execution · Integrity')).toBeInTheDocument();
+    expect(container.querySelector('.card-values')).toHaveTextContent('Transparency / Speed of execution / Integrity');
     expect(container.querySelectorAll('.chip-label')).toHaveLength(5);
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
   });

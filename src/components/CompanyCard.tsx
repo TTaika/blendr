@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { formatRange } from '../../shared/questions';
 import { stageLabel } from '../../shared/taxonomy';
 import type { Company } from '../../shared/types';
@@ -34,7 +35,18 @@ export function CompanyCard({ company, score, matched = [], showContact = false,
           <span className="spacer" />
           {score !== undefined && <span className="match">{score}% match</span>}
         </div>
-        <p className="card-values">{company.values.join(' · ')}</p>
+        <p className="card-values">
+          {company.values.map((value, i) => (
+            <Fragment key={value}>
+              {i > 0 && (
+                <span className="slash" aria-hidden="true">
+                  {' / '}
+                </span>
+              )}
+              <span>{value}</span>
+            </Fragment>
+          ))}
+        </p>
         <p className="card-meta muted">
           {stageLabel(company.stage)} · raising {formatRange(company.raise)}
         </p>
