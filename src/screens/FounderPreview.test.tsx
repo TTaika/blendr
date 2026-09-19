@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Profile } from '../../shared/types';
+import { stubVideoPlayback } from '../test/media';
 import { stubObjectUrls } from '../test/objectUrls';
 import { FounderPreview } from './FounderPreview';
 
@@ -59,7 +60,10 @@ describe('FounderPreview: pitch video', () => {
   const withVideo: Profile = { ...profile, answers: { ...profile.answers, pitchVideo: 'pitch.mov · 0:48' } };
   const clip = new Blob(['clip'], { type: 'video/quicktime' });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   it("shows the founder's own video in the card details", async () => {
     const { create } = stubObjectUrls();
@@ -88,6 +92,15 @@ describe('FounderPreview: pitch video', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.queryByRole('heading', { name: 'Pitch video' })).not.toBeInTheDocument();
     expect(screen.queryByText('Pitch video coming soon')).not.toBeInTheDocument();
+  });
+
+  it('plays the video once half of it is on screen', async () => {
+    stubObjectUrls();
+    const media = stubVideoPlayback();
+    const { container } = render(<FounderPreview profile={withVideo} onStartOver={vi.fn()} loadVideo={vi.fn(async () => clip)} />);
+    await screen.findByRole('heading', { name: 'Pitch video' });
+    media.showVideo(container.querySelector('video')!, 0.5);
+    expect(media.play).toHaveBeenCalledTimes(1);
   });
 
   it('revokes the video URL when the preview closes', async () => {

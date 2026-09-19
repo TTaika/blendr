@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } fr
 import type { Company, FeedEntry } from '../../shared/types';
 import { CompanyCard } from '../components/CompanyCard';
 import { personalityFit } from '../lib/matching';
+import { playPling, playSwoosh } from '../lib/sounds';
 
 export const SWIPE_THRESHOLD = 100;
 
@@ -77,6 +78,9 @@ export function Swipe({
   function decide(decision: Decision) {
     if (!top || exitingRef.current) return;
     exitingRef.current = true;
+    // Inside the swipe or tap gesture, so browsers let the sound play.
+    if (decision === 'like') playPling();
+    else playSwoosh();
     setExiting(decision);
     const finish = () => {
       animRef.current = null;
@@ -209,6 +213,7 @@ export function Swipe({
                   company={company}
                   matched={top.matched}
                   fit={top.score !== undefined ? personalityFit(top.matched) : undefined}
+                  autoplayVideo
                 />
               </div>
               <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>

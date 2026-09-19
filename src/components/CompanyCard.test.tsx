@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureCompany } from '../test/fixtures';
+import { stubVideoPlayback } from '../test/media';
 import { CompanyCard } from './CompanyCard';
 
 const chipLabels = (container: ParentNode) =>
@@ -137,5 +138,118 @@ describe('CompanyCard', () => {
     rerender(<CompanyCard company={{ ...fixtureCompany, videoUrl: '/videos/other.mp4' }} />);
     expect(container.querySelector('video')).toHaveAttribute('src', '/videos/other.mp4');
     expect(screen.queryByText('Pitch video coming soon')).not.toBeInTheDocument();
+  });
+});
+
+describe('CompanyCard: pitch video autoplay', () => {
+  const withVideo = { ...fixtureCompany, videoUrl: '/videos/pitch.mp4' };
+  const videoOf = (container: HTMLElement) => container.querySelector('video')!;
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('plays once at least half of the video is on screen', () => {
+    const media = stubVideoPlayback();
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    media.showVideo(video, 0.4);
+    expect(media.play).not.toHaveBeenCalled();
+    media.showVideo(video, 0.5);
+    expect(media.play).toHaveBeenCalledTimes(1);
+    expect(video.paused).toBe(false);
+    expect(video).toHaveAttribute('playsinline');
+    expect(video).toHaveAttribute('controls');
+  });
+
+  it("doesn't play on a card that isn't active", () => {
+    const media = stubVideoPlayback();
+    const { container } = render(<CompanyCard company={withVideo} />);
+    media.showVideo(videoOf(container), 1);
+    expect(media.play).not.toHaveBeenCalled();
+  });
+
+  it('starts playing when the card becomes active while its video is already on screen', () => {
+    const media = stubVideoPlayback();
+    const { container, rerender } = render(<CompanyCard company={withVideo} autoplayVideo={false} />);
+    media.showVideo(videoOf(container), 0.8);
+    expect(media.play).not.toHaveBeenCalled();
+    rerender(<CompanyCard company={withVideo} autoplayVideo />);
+    expect(media.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts muted when the browser blocks autoplay with sound', async () => {
+    const media = stubVideoPlayback();
+    media.play.mockRejectedValueOnce(new DOMException('Sound needs a gesture', 'NotAllowedError'));
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    expect(video.muted).toBe(false);
+    media.showVideo(video, 0.6);
+    await waitFor(() => expect(media.play).toHaveBeenCalledTimes(2));
+    expect(video.muted).toBe(true);
+    expect(video.paused).toBe(false);
+  });
+
+  it("doesn't retry muted when the start was interrupted rather than blocked", async () => {
+    const media = stubVideoPlayback();
+    media.play.mockRejectedValueOnce(new DOMException('Interrupted by pause()', 'AbortError'));
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    media.showVideo(video, 0.6);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(media.play).toHaveBeenCalledTimes(1);
+    expect(video.muted).toBe(false);
+  });
+
+  it('pauses below half visible, and resumes what it paused when scrolled back', () => {
+    const media = stubVideoPlayback();
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    media.showVideo(video, 1);
+    media.showVideo(video, 0.3);
+    expect(media.pause).toHaveBeenCalledTimes(1);
+    expect(video.paused).toBe(true);
+    media.showVideo(video, 0.7);
+    expect(media.play).toHaveBeenCalledTimes(2);
+    expect(video.paused).toBe(false);
+  });
+
+  it("doesn't resume a video the viewer paused, or one that ended", () => {
+    const media = stubVideoPlayback();
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    media.showVideo(video, 1);
+    media.stopByViewer(video);
+    media.showVideo(video, 0);
+    media.showVideo(video, 1);
+    expect(media.play).toHaveBeenCalledTimes(1);
+    expect(media.pause).not.toHaveBeenCalled();
+  });
+
+  it('stops watching the video when the card goes away', () => {
+    const media = stubVideoPlayback();
+    const { container, unmount } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    expect(media.watching(video)).toBe(1);
+    unmount();
+    expect(media.watching(video)).toBe(0);
+  });
+
+  it('still falls back to "Pitch video coming soon" when the video fails to load', () => {
+    const media = stubVideoPlayback();
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    const video = videoOf(container);
+    fireEvent.error(video);
+    expect(screen.getByText('Pitch video coming soon')).toBeInTheDocument();
+    expect(media.watching(video)).toBe(0);
+  });
+
+  it('does nothing where IntersectionObserver is missing', () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    expect(typeof IntersectionObserver).toBe('undefined');
+    const { container } = render(<CompanyCard company={withVideo} autoplayVideo />);
+    expect(container.querySelector('video')).not.toBeNull();
+    expect(play).not.toHaveBeenCalled();
   });
 });

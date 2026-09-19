@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Company, FeedEntry } from '../../shared/types';
+import { playPling, playSwoosh } from '../lib/sounds';
 import { FIXTURE_COMPANY_BY_ID, fixtureCompany, fixtureCompany2 } from '../test/fixtures';
+import { stubVideoPlayback } from '../test/media';
 import { MAX_TILT, Swipe, cardTransform, swipeDecision } from './Swipe';
+
+vi.mock('../lib/sounds', () => ({ playPling: vi.fn(), playSwoosh: vi.fn() }));
 
 const entries: FeedEntry[] = [
   { companyId: fixtureCompany.id, score: 80, matched: ['nordics'] },
@@ -13,7 +17,7 @@ const entries: FeedEntry[] = [
 
 function setup(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
   const handlers = { onLike: vi.fn(), onDiscard: vi.fn(), onOpenConnect: vi.fn(), onDismissPrompt: vi.fn(), onReviewPassed: vi.fn() };
-  const result = render(
+  const ui = (more: Partial<Parameters<typeof Swipe>[0]> = {}) => (
     <Swipe
       entries={entries}
       companies={FIXTURE_COMPANY_BY_ID}
@@ -23,9 +27,16 @@ function setup(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
       exitMs={0}
       {...handlers}
       {...props}
-    />,
+      {...more}
+    />
   );
-  return { user: userEvent.setup(), unmount: result.unmount, ...handlers };
+  const result = render(ui());
+  return {
+    user: userEvent.setup(),
+    unmount: result.unmount,
+    rerender: (more: Partial<Parameters<typeof Swipe>[0]>) => result.rerender(ui(more)),
+    ...handlers,
+  };
 }
 
 describe('swipeDecision', () => {
@@ -163,6 +174,103 @@ describe('Swipe', () => {
     const { user, onDismissPrompt } = setup({ likedCount: 5, showConnectPrompt: true });
     await user.keyboard('{Escape}');
     expect(onDismissPrompt).toHaveBeenCalled();
+  });
+});
+
+describe('Swipe: sounds', () => {
+  beforeEach(() => {
+    vi.mocked(playPling).mockClear();
+    vi.mocked(playSwoosh).mockClear();
+  });
+
+  const drag = (dx: number) => {
+    const heading = screen.getByRole('heading', { name: fixtureCompany.name });
+    fireEvent.pointerDown(heading, { clientX: 0, pointerId: 1 });
+    fireEvent.pointerMove(heading, { clientX: dx, pointerId: 1 });
+    fireEvent.pointerUp(heading, { clientX: dx, pointerId: 1 });
+  };
+
+  it('plings once on a like', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    expect(playPling).toHaveBeenCalledTimes(1);
+    expect(playSwoosh).not.toHaveBeenCalled();
+  });
+
+  it('swooshes once on a pass', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Pass' }));
+    expect(playSwoosh).toHaveBeenCalledTimes(1);
+    expect(playPling).not.toHaveBeenCalled();
+  });
+
+  it('plays the same sounds for a drag past the threshold', () => {
+    const { onLike, onDiscard } = setup();
+    drag(150);
+    expect(onLike).toHaveBeenCalledTimes(1);
+    expect(playPling).toHaveBeenCalledTimes(1);
+    drag(-150);
+    expect(onDiscard).toHaveBeenCalledTimes(1);
+    expect(playSwoosh).toHaveBeenCalledTimes(1);
+    expect(playPling).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays quiet when a drag falls short of the threshold', () => {
+    const { onLike, onDiscard } = setup();
+    drag(60);
+    drag(-60);
+    expect(playPling).not.toHaveBeenCalled();
+    expect(playSwoosh).not.toHaveBeenCalled();
+    expect(onLike).not.toHaveBeenCalled();
+    expect(onDiscard).not.toHaveBeenCalled();
+  });
+
+  it('plays one sound per decision, as the exit starts, ignoring taps during the exit', async () => {
+    // An exit that outlasts the test; unmounting afterwards drops it.
+    const { user, onLike } = setup({ exitMs: 60_000 });
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    expect(playPling).toHaveBeenCalledTimes(1);
+    expect(onLike).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    await user.click(screen.getByRole('button', { name: 'Pass' }));
+    expect(playPling).toHaveBeenCalledTimes(1);
+    expect(playSwoosh).not.toHaveBeenCalled();
+  });
+
+  it('plays in skip mode too', async () => {
+    const skipEntries: FeedEntry[] = entries.map(({ companyId, matched }) => ({ companyId, matched }));
+    const { user } = setup({ entries: skipEntries, subtitle: 'Random order' });
+    await user.click(screen.getByRole('button', { name: 'Pass' }));
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    expect(playSwoosh).toHaveBeenCalledTimes(1);
+    expect(playPling).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Swipe: pitch video autoplay', () => {
+  const withVideo = new Map([...FIXTURE_COMPANY_BY_ID].map(([id, c]) => [id, { ...c, videoUrl: `/videos/${id}.mp4` }]));
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('autoplays only the top card, and the card under it once it comes to the top', async () => {
+    const media = stubVideoPlayback();
+    const { user, onLike, rerender } = setup({ companies: withVideo });
+    const main = screen.getByRole('main');
+    const topVideo = main.querySelector('.swipe-card:not(.under) video')!;
+    const underVideo = main.querySelector('.swipe-card.under video')!;
+    media.showVideo(underVideo, 1);
+    expect(media.play).not.toHaveBeenCalled();
+    media.showVideo(topVideo, 1);
+    expect(media.play.mock.contexts).toEqual([topVideo]);
+
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    await waitFor(() => expect(onLike).toHaveBeenCalledWith(fixtureCompany.id));
+    rerender({ entries: [entries[1]] });
+    expect(main.querySelector('.swipe-card:not(.under) video')).toBe(underVideo);
+    expect(media.play.mock.contexts).toEqual([topVideo, underVideo]);
   });
 });
 

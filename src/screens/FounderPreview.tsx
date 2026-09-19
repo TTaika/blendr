@@ -40,7 +40,7 @@ export function FounderPreview({ profile, onStartOver, loadVideo = loadPitchVide
         <h1>You're live!</h1>
         <p className="muted">This is how investors will see your card. Tap a keyword to see why it was chosen.</p>
       </header>
-      <CompanyCard company={videoUrl ? { ...company, videoUrl } : company} allKeywords showContact />
+      <CompanyCard company={videoUrl ? { ...company, videoUrl } : company} allKeywords showContact autoplayVideo />
       <button type="button" className="btn btn-ghost" onClick={onStartOver}>
         Start over
       </button>
