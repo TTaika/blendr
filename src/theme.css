@@ -115,3 +115,19 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .option-on { border-color: var(--accent); background: var(--surface-2); }
 .add-keyword { display: flex; flex-direction: column; gap: 8px; }
 .add-keyword select { flex: 1; }
+/* Connect */
+.liked-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.liked-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.liked-name { font-weight: 600; }
+.liked-meta { font-size: 0.85rem; }
