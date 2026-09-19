@@ -132,7 +132,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .liked-name { font-weight: 600; }
 .liked-meta { font-size: 0.85rem; }
 /* Swipe */
-.swipe { height: 100vh; height: 100dvh; min-height: 0; }
+.swipe { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
 .deck { flex: 1; min-height: 0; position: relative; }
 .swipe-card {
   height: 100%;

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +43,9 @@ app.listen(port, '0.0.0.0', () => {
     });
   }
   if (!production) return;
+  if (!existsSync(path.join(rootDir, 'dist', 'index.html'))) {
+    console.warn('WARNING: dist/ not found — run "npm run build" before "npm start".');
+  }
   for (const addresses of Object.values(os.networkInterfaces())) {
     for (const a of addresses ?? []) {
       if (a.family === 'IPv4' && !a.internal) console.log(`  Open on phones: http://${a.address}:${port}`);
