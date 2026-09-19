@@ -1,8 +1,13 @@
 import type { Answers, KeywordResult, Role } from '../../shared/types';
+import { requestKeywordsViaClaude } from './claudeKeywords';
 
 export type RequestKeywords = (role: Role, answers: Answers) => Promise<KeywordResult>;
 
+/** True in the claude.ai Artifact build (`npm run build:artifact`), which has no server. */
+export const IS_ARTIFACT = import.meta.env.VITE_TARGET === 'artifact';
+
 export async function requestKeywords(role: Role, answers: Answers, fetchImpl: typeof fetch = fetch): Promise<KeywordResult> {
+  if (IS_ARTIFACT) return requestKeywordsViaClaude(role, answers);
   let res: Response;
   try {
     res = await fetchImpl('/api/keywords', {

@@ -10,7 +10,8 @@
     "dev": "concurrently -n api,web -c green,cyan \"tsx watch server/main.ts\" \"vite --host\"",
     "build": "vite build",
     "start": "NODE_ENV=production tsx server/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:artifact": "VITE_TARGET=artifact vite build --base ./ --outDir dist-artifact --emptyOutDir"
   },
   "keywords": [],
   "author": "",
