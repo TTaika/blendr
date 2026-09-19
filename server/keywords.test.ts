@@ -59,9 +59,9 @@ describe('buildPrompt', () => {
 
   it('includes the investor personality and sector rules referencing valuesWanted and risk', () => {
     const prompt = buildPrompt('investor', investorAnswers, null);
-    expect(prompt).toContain('Pick sector keywords only if the answers explicitly name sectors; otherwise pick none.');
+    expect(prompt).toContain('Pick 1-4 sector keywords from the sectors they say they prefer in what they are looking for in a startup; if they name none, pick none.');
     expect(prompt).toContain(
-      'Pick 2-3 personality keywords from what they value in a startup, the three 1-10 scale answers (pressure, transparency, risk) and what makes them say yes to a founder.',
+      'Pick 2-3 personality keywords from what they value in a startup, the three 1-10 scale answers (pressure, transparency, risk) and what they are looking for in a startup.',
     );
     expect(prompt).toContain("Q: What do you value in a startup?\nA: Data-driven, Long-term thinker");
   });

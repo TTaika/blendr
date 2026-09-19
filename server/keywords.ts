@@ -41,11 +41,11 @@ const ROLE_RULES: Record<Role, string[]> = {
   ],
   investor: [
     'You are profiling an investor so startups at Slush can be matched to them.',
-    'Pick sector keywords only if the answers explicitly name sectors; otherwise pick none.',
+    'Pick 1-4 sector keywords from the sectors they say they prefer in what they are looking for in a startup; if they name none, pick none.',
     'Pick 1-2 business model keywords the investor prefers.',
     'Pick 1-3 geography keywords from the regions answer.',
     "Pick the involvement keywords matching the investor's answers to the involvement question (one per chosen option).",
-    'Pick 2-3 personality keywords from what they value in a startup, the three 1-10 scale answers (pressure, transparency, risk) and what makes them say yes to a founder.',
+    'Pick 2-3 personality keywords from what they value in a startup, the three 1-10 scale answers (pressure, transparency, risk) and what they are looking for in a startup.',
     "The summary describes the investor's focus, max 100 characters.",
   ],
 };

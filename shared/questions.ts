@@ -162,7 +162,7 @@ export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'valuesWanted', label: 'What do you value in a startup?', help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: PERSONALITY_OPTIONS },
   { id: 'regions', label: 'Which regions do you invest in?', kind: 'text', required: true, maxLength: 120 },
   { id: 'involvement', label: 'How involved are you after investing?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
-  { id: 'founderFit', label: 'What makes you say yes to a founder?', kind: 'longtext', required: true, maxLength: 300 },
+  { id: 'founderFit', label: 'What are you looking for in a startup and what sectors do you prefer?', kind: 'longtext', required: true, maxLength: 300 },
   scaleQuestion('pressure', 'How hard do you push founders on targets?', 'Patient: long runway, light check-ins', 'Intense: clear targets, weekly check-ins'),
   scaleQuestion('transparency', 'How much transparency do you expect from founders?', 'Quarterly highlights are enough', 'Bad news the same day it happens'),
   scaleQuestion('risk', 'How much risk do you like to take?', 'Proven models, steady returns', 'Moonshots, all-or-nothing'),

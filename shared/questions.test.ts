@@ -42,6 +42,12 @@ describe('questions', () => {
     for (const o of PERSONALITY_OPTIONS) expect(getKeyword(o.id)?.category).toBe('personality');
   });
 
+  it('asks investors what they look for in a startup and which sectors they prefer', () => {
+    const q = INVESTOR_QUESTIONS.find((x) => x.id === 'founderFit')!;
+    expect(q.label).toBe('What are you looking for in a startup and what sectors do you prefer?');
+    expect(q.kind).toBe('longtext');
+  });
+
   it('gives the investor risk question a 1-10 scale with the moonshot/steady-returns labels', () => {
     const risk = INVESTOR_QUESTIONS.find((q) => q.id === 'risk')!;
     expect(risk.kind).toBe('scale');
