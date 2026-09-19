@@ -1,0 +1,17 @@
+{
+  "role": "founder",
+  "answers": {
+    "companyName": "Northlight Grid",
+    "website": "",
+    "oneLiner": "Software that lets building owners sell flexible power back to the grid.",
+    "stage": "seed",
+    "raise": "t-2m-5m",
+    "problem": "Grids need flexibility to absorb wind and solar, but buildings with controllable heating sit idle.",
+    "solution": "We connect building automation to reserve markets and shift heating loads automatically.",
+    "traction": "ARR 620k EUR, 14% month-on-month growth, 410 buildings connected in Finland and Sweden.",
+    "team": "CEO led energy trading at a Nordic utility; CTO built building-automation control software.",
+    "involvement": "hands-on",
+    "whyInvest": "Reserve-market prices doubled in two years and we are integrated with the largest Nordic vendors.",
+    "workStyle": "Engineers at heart: we test every decision with data and move fast."
+  }
+}
