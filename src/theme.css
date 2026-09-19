@@ -91,3 +91,20 @@ p { margin: 0; }
 .numbers dd { margin: 2px 0 0; font-size: 1.1rem; font-weight: 600; }
 .card-video { width: 100%; border-radius: 12px; background: var(--bg-deep); }
 .contact p { margin-top: 4px; }
+
+/* Connect */
+.liked-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.liked-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.liked-name { font-weight: 600; }
+.liked-meta { font-size: 0.85rem; }
