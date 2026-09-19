@@ -57,12 +57,25 @@ describe('Swipe', () => {
     expect(deck.querySelectorAll(':scope > .stamp')).toHaveLength(0);
   });
 
-  it('shows only the top company with its match score', () => {
+  it('shows only the top company, with a personality fit label in investor mode', () => {
     setup();
     expect(screen.getByText('Ranked for Birch Ventures')).toBeInTheDocument();
     expect(screen.getByRole('article', { name: fixtureCompany.name })).toBeInTheDocument();
-    expect(screen.getByText('80% match')).toBeInTheDocument();
+    expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
+    const article = screen.getByRole('article', { name: fixtureCompany.name });
+    expect(article.querySelector('.fit')).not.toBeNull();
     expect(screen.queryByRole('article', { name: fixtureCompany2.name })).not.toBeInTheDocument();
+  });
+
+  it('shows no fit label in skip mode (entries without a score)', () => {
+    const skipEntries: FeedEntry[] = [
+      { companyId: fixtureCompany.id, matched: ['nordics'] },
+      { companyId: fixtureCompany2.id, matched: [] },
+    ];
+    setup({ entries: skipEntries, subtitle: 'Random order' });
+    const article = screen.getByRole('article', { name: fixtureCompany.name });
+    expect(article.querySelector('.fit')).toBeNull();
+    expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
   });
 
   it('renders the stamp texts MATCH and PASS', () => {

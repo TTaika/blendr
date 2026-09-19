@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import type { Company, FeedEntry } from '../../shared/types';
 import { CompanyCard } from '../components/CompanyCard';
+import { personalityFit } from '../lib/matching';
 
 export const SWIPE_THRESHOLD = 100;
 
@@ -200,7 +201,11 @@ export function Swipe({
                 }}
               >
                 <div className="swipe-scroll">
-                  <CompanyCard company={nextCompany} score={next.score} matched={next.matched} />
+                  <CompanyCard
+                    company={nextCompany}
+                    matched={next.matched}
+                    fit={next.score !== undefined ? personalityFit(next.matched) : undefined}
+                  />
                 </div>
               </div>
             )}
@@ -218,7 +223,11 @@ export function Swipe({
               onPointerCancel={onPointerCancel}
             >
               <div className="swipe-scroll">
-                <CompanyCard company={company} score={top.score} matched={top.matched} />
+                <CompanyCard
+                  company={company}
+                  matched={top.matched}
+                  fit={top.score !== undefined ? personalityFit(top.matched) : undefined}
+                />
               </div>
               <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
                 MATCH
