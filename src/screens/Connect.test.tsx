@@ -2,25 +2,25 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { COMPANY_BY_ID } from '../data/companies';
+import { fixtureCompany, fixtureCompany2 } from '../test/fixtures';
 import { Connect } from './Connect';
 
-const liked = [COMPANY_BY_ID.get('northlight-grid')!, COMPANY_BY_ID.get('shieldpath')!];
+const liked = [fixtureCompany, fixtureCompany2];
 
 describe('Connect', () => {
   it('lists liked companies in like order', () => {
     render(<Connect companies={liked} onBackToSwiping={vi.fn()} />);
     expect(screen.getByText('2 liked companies')).toBeInTheDocument();
     const names = screen.getAllByRole('listitem').map((li) => li.querySelector('.liked-name')?.textContent);
-    expect(names).toEqual(['Northlight Grid', 'Shieldpath']);
+    expect(names).toEqual([fixtureCompany.name, fixtureCompany2.name]);
   });
 
   it('opens the full profile with contact details and returns to the list', async () => {
     const user = userEvent.setup();
     render(<Connect companies={liked} onBackToSwiping={vi.fn()} />);
-    await user.click(screen.getByRole('button', { name: /Shieldpath/ }));
-    expect(screen.getByRole('article', { name: 'Shieldpath' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'lauri@shieldpath.example' })).toHaveAttribute('href', 'mailto:lauri@shieldpath.example');
+    await user.click(screen.getByRole('button', { name: new RegExp(fixtureCompany2.name) }));
+    expect(screen.getByRole('article', { name: fixtureCompany2.name })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: fixtureCompany2.contact.email })).toHaveAttribute('href', `mailto:${fixtureCompany2.contact.email}`);
     await user.click(screen.getByRole('button', { name: '← All likes' }));
     expect(screen.getByText('2 liked companies')).toBeInTheDocument();
   });
@@ -30,7 +30,7 @@ describe('Connect', () => {
     const onBackToSwiping = vi.fn();
     render(<Connect companies={liked} onBackToSwiping={onBackToSwiping} />);
     await user.click(screen.getByRole('button', { name: 'Back to swiping' }));
-    await user.click(screen.getByRole('button', { name: /Northlight Grid/ }));
+    await user.click(screen.getByRole('button', { name: new RegExp(fixtureCompany.name) }));
     await user.click(screen.getByRole('button', { name: 'Back to swiping' }));
     expect(onBackToSwiping).toHaveBeenCalledTimes(2);
   });

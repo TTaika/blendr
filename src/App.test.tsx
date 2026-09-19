@@ -2,10 +2,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { Answers, KeywordResult } from '../shared/types';
+import type { Answers, KeywordResult, Profile } from '../shared/types';
 import App from './App';
 import { COMPANIES, COMPANY_BY_ID } from './data/companies';
-import { randomFeed } from './lib/matching';
+import { criteriaFromProfile, randomFeed, rankFeed } from './lib/matching';
 import { STORAGE_KEY } from './lib/storage';
 import { type DemoState, initialState } from './state/demo';
 
@@ -79,8 +79,16 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Submit profile' }));
     expect(screen.getByText('Ranked for Birch Ventures')).toBeInTheDocument();
-    expect(topCardName()).toBe('Northlight Grid');
-    expect(screen.getByText('80% match')).toBeInTheDocument();
+
+    const profile: Profile = {
+      role: 'investor',
+      answers: investorAnswers,
+      summary: investorResult.summary,
+      keywords: investorResult.keywords.map((k) => ({ ...k, source: 'ai' as const })),
+    };
+    const top = rankFeed(criteriaFromProfile(profile), COMPANIES)[0];
+    expect(topCardName()).toBe(COMPANY_BY_ID.get(top.companyId)!.name);
+    expect(screen.getByText(`${top.score}% match`)).toBeInTheDocument();
   });
 
   it('skip: random feed, prompt after 5 likes, Connect lists the likes', async () => {
@@ -199,11 +207,11 @@ describe('App', () => {
     preload({
       screen: 'swipe',
       mode: 'skip',
-      feed: [{ companyId: 'gone-co', matched: [] }, { companyId: 'northlight-grid', matched: [] }],
+      feed: [{ companyId: 'gone-co', matched: [] }, { companyId: COMPANIES[0].id, matched: [] }],
       likedIds: ['gone-co'],
     });
     render(<App />);
-    expect(topCardName()).toBe('Northlight Grid');
+    expect(topCardName()).toBe(COMPANIES[0].name);
     expect(screen.getByRole('button', { name: 'Connect (0)' })).toBeInTheDocument();
   });
 });

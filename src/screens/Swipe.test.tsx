@@ -3,12 +3,12 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { FeedEntry } from '../../shared/types';
-import { COMPANY_BY_ID } from '../data/companies';
+import { FIXTURE_COMPANY_BY_ID, fixtureCompany, fixtureCompany2 } from '../test/fixtures';
 import { Swipe, swipeDecision } from './Swipe';
 
 const entries: FeedEntry[] = [
-  { companyId: 'northlight-grid', score: 80, matched: ['nordics'] },
-  { companyId: 'routeflow', score: 65, matched: [] },
+  { companyId: fixtureCompany.id, score: 80, matched: ['nordics'] },
+  { companyId: fixtureCompany2.id, score: 65, matched: [] },
 ];
 
 function setup(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
@@ -16,7 +16,7 @@ function setup(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
   const result = render(
     <Swipe
       entries={entries}
-      companies={COMPANY_BY_ID}
+      companies={FIXTURE_COMPANY_BY_ID}
       subtitle="Ranked for Birch Ventures"
       likedCount={3}
       showConnectPrompt={false}
@@ -41,9 +41,9 @@ describe('Swipe', () => {
   it('shows only the top company with its match score', () => {
     setup();
     expect(screen.getByText('Ranked for Birch Ventures')).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'Northlight Grid' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: fixtureCompany.name })).toBeInTheDocument();
     expect(screen.getByText('80% match')).toBeInTheDocument();
-    expect(screen.queryByRole('article', { name: 'Routeflow' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: fixtureCompany2.name })).not.toBeInTheDocument();
   });
 
   it('renders the stamp texts MATCH and PASS', () => {
@@ -61,16 +61,16 @@ describe('Swipe', () => {
     await user.click(screen.getByRole('button', { name: 'Like' }));
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('MATCH');
-    expect(status).toHaveTextContent('with Northlight Grid');
+    expect(status).toHaveTextContent(`with ${fixtureCompany.name}`);
     await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument(), { timeout: 1500 });
   });
 
   it('likes and passes with the buttons', async () => {
     const { user, onLike, onDiscard } = setup();
     await user.click(screen.getByRole('button', { name: 'Like' }));
-    await waitFor(() => expect(onLike).toHaveBeenCalledWith('northlight-grid'));
+    await waitFor(() => expect(onLike).toHaveBeenCalledWith(fixtureCompany.id));
     await user.click(screen.getByRole('button', { name: 'Pass' }));
-    await waitFor(() => expect(onDiscard).toHaveBeenCalledWith('northlight-grid'));
+    await waitFor(() => expect(onDiscard).toHaveBeenCalledWith(fixtureCompany.id));
   });
 
   it('opens Connect from the header button', async () => {

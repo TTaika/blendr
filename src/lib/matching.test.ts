@@ -76,17 +76,38 @@ describe('rankFeed', () => {
     expect(feed[0]).toEqual({ companyId: 'high', score: 40, matched: [] });
   });
 
-  it('puts Northlight Grid first for a Nordic climate seed investor', () => {
-    const feed = rankFeed(
-      { stages: ['seed'], ticketRange: [2000, 5000], keywordIds: ['climate', 'usage-based', 'nordics', 'hands-on', 'technical'] },
-      COMPANIES,
-    );
-    expect(feed[0]).toEqual({
-      companyId: 'northlight-grid',
-      score: 80,
-      matched: ['climate', 'usage-based', 'nordics', 'hands-on', 'technical'],
-    });
+  it('ranks the real test companies consistently with scoreCompany', () => {
+    const criteria: InvestorCriteria = {
+      stages: ['seed'],
+      ticketRange: [2000, 5000],
+      keywordIds: ['climate', 'usage-based', 'nordics', 'hands-on', 'technical'],
+    };
+    const feed = rankFeed(criteria, COMPANIES);
     expect(feed).toHaveLength(COMPANIES.length);
+
+    // The feed must be sorted by score (desc), then by name (asc), matching scoreCompany directly.
+    const byId = new Map(COMPANIES.map((c) => [c.id, c]));
+    let previous: { score: number; name: string } | null = null;
+    for (const entry of feed) {
+      const c = byId.get(entry.companyId)!;
+      const expected = scoreCompany(criteria, c);
+      const score = entry.score!; // rankFeed always sets a score
+      expect(score).toBe(expected.score);
+      expect(entry.matched).toEqual(expected.matched);
+      if (previous) {
+        expect(previous.score > score || (previous.score === score && previous.name.localeCompare(c.name) <= 0)).toBe(true);
+      }
+      previous = { score, name: c.name };
+    }
+  });
+
+  it('fits an investor range around an exact company raise, and rejects a range that misses it', () => {
+    expect(
+      scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [2500, 2500] })).score,
+    ).toBe(15);
+    expect(
+      scoreCompany({ ...none, ticketRange: [5000, 10000] }, company({ raise: [2500, 2500] })).score,
+    ).toBe(0);
   });
 });
 

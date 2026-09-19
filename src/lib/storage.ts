@@ -1,4 +1,4 @@
-export const STORAGE_KEY = 'blendr-v1';
+export const STORAGE_KEY = 'blendr-v2';
 
 export function loadSaved(): unknown {
   try {

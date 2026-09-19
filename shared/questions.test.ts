@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAnswer, missingRequired, parseRange, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
@@ -116,5 +116,32 @@ describe('questions', () => {
   it('flags a required values question as missing when empty, and present with at least one selection', () => {
     expect(missingRequired('founder', { values: [] }).map((q) => q.id)).toContain('values');
     expect(missingRequired('founder', { values: ['transparency'] }).map((q) => q.id)).not.toContain('values');
+  });
+});
+
+describe('formatAmount', () => {
+  it('uses the TICKET_STOPS label for a stop value', () => {
+    expect(formatAmount(0)).toBe('Under €100k');
+    expect(formatAmount(100000)).toBe('€100M+');
+    expect(formatAmount(25000)).toBe('€25M');
+  });
+
+  it('formats amounts below €1M in thousands', () => {
+    expect(formatAmount(450)).toBe('€450k');
+  });
+
+  it('formats amounts at or above €1M in millions without a trailing .0', () => {
+    expect(formatAmount(2500)).toBe('€2.5M');
+    expect(formatAmount(8500)).toBe('€8.5M');
+  });
+});
+
+describe('formatRange', () => {
+  it('formats an equal-ends range as a single amount', () => {
+    expect(formatRange([2500, 2500])).toBe('€2.5M');
+  });
+
+  it('formats a min–max range with an en dash', () => {
+    expect(formatRange([500, 5000])).toBe('€500k – €5M');
   });
 });

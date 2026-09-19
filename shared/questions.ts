@@ -56,11 +56,23 @@ export function parseRange(value: AnswerValue | undefined): [number, number] | n
   return [min, max];
 }
 
-/** Formats a `[min, max]` € thousands range using the TICKET_STOPS labels, e.g. "€2M – €5M". */
+/**
+ * Formats a € thousands amount. A TICKET_STOPS value uses that stop's label (e.g. 0 → "Under
+ * €100k", 100000 → "€100M+"); otherwise below 1000 → "€<k>k" (450 → "€450k"), at or above 1000 →
+ * "€<k/1000>M" without a trailing ".0" (2500 → "€2.5M", 25000 → "€25M").
+ */
+export function formatAmount(k: number): string {
+  const stop = TICKET_STOPS.find((s) => s.value === k);
+  if (stop) return stop.label;
+  if (k < 1000) return `€${k}k`;
+  const millions = Math.round((k / 1000) * 10) / 10;
+  return `€${Number.isInteger(millions) ? millions : millions.toFixed(1)}M`;
+}
+
+/** Formats a `[min, max]` € thousands range, e.g. "€2M – €5M". Equal ends format as a single amount. */
 export function formatRange(range: [number, number]): string {
-  const label = (value: number) => TICKET_STOPS.find((s) => s.value === value)?.label ?? String(value);
   const [min, max] = range;
-  return `${label(min)} – ${label(max)}`;
+  return min === max ? formatAmount(min) : `${formatAmount(min)} – ${formatAmount(max)}`;
 }
 
 // Option ids are taxonomy keyword ids, so the chosen answer maps straight to a keyword.

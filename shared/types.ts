@@ -52,7 +52,7 @@ export interface Company {
   whyInvest: string;
   website: string;
   contact: Contact;
-  videoUrl?: string; // e.g. '/videos/northlight.mp4' served from public/videos
+  videoUrl?: string; // e.g. '/videos/quantumcore.mp4' served from public/videos
 }
 
 /** One card in the swipe feed. `score` is undefined in random ("skip") mode. */

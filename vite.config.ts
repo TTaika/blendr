@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -10,5 +10,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['./src/test/setup.ts'],
+    // Exclude nested agent worktrees (.claude/worktrees/**) so their own copies of the test
+    // suite don't get picked up alongside this project's tests.
+    exclude: [...configDefaults.exclude, '.claude/**'],
   },
 });
