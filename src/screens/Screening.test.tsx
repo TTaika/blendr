@@ -17,7 +17,9 @@ const founderAnswers: Answers = {
   team: 'Team',
   involvement: ['hands-on'],
   whyInvest: 'W',
-  workStyle: 'Fast',
+  pressure: '7',
+  transparency: '6',
+  leadership: '5',
 };
 const result: KeywordResult = { summary: 'Acme does X', keywords: [{ id: 'fintech', reason: 'r' }], websiteUsed: false };
 
@@ -56,35 +58,35 @@ async function goToLastStep(user: UserEvent) {
 }
 
 describe('Screening', () => {
-  it('shows only the first founder question, with progress 1 / 11', () => {
+  it('shows only the first founder question, with progress 1 / 13', () => {
     setup({ role: 'founder' });
     expect(screen.getByRole('heading', { name: 'Tell us about your startup' })).toBeInTheDocument();
-    expect(screen.getByText('1 / 11')).toBeInTheDocument();
+    expect(screen.getByText('1 / 13')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toBeInTheDocument();
     expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: "Choose your company's three main values" })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Question progress' });
     expect(bar).toHaveAttribute('aria-valuemin', '1');
-    expect(bar).toHaveAttribute('aria-valuemax', '11');
+    expect(bar).toHaveAttribute('aria-valuemax', '13');
     expect(bar).toHaveAttribute('aria-valuenow', '1');
   });
 
-  it('shows only the first investor question, with progress 1 / 9', () => {
+  it('shows only the first investor question, with progress 1 / 11', () => {
     setup({ role: 'investor' });
     expect(screen.getByRole('heading', { name: 'Tell us about your investing' })).toBeInTheDocument();
-    expect(screen.getByText('1 / 9')).toBeInTheDocument();
+    expect(screen.getByText('1 / 11')).toBeInTheDocument();
     expect(screen.getByLabelText('Your name')).toBeInTheDocument();
     expect(screen.queryByLabelText('Fund or firm')).not.toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Question progress' });
-    expect(bar).toHaveAttribute('aria-valuemax', '9');
+    expect(bar).toHaveAttribute('aria-valuemax', '11');
   });
 
   it('blocks Next on an empty required question and shows an alert, staying on step 1', async () => {
     const { user } = setup({ role: 'founder' });
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
-    expect(screen.getByText('1 / 11')).toBeInTheDocument();
+    expect(screen.getByText('1 / 13')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toHaveAttribute('aria-invalid', 'true');
   });
 
@@ -93,7 +95,7 @@ describe('Screening', () => {
     render(<Controlled role="founder" />);
     await user.type(screen.getByLabelText('Company name'), 'Acme');
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('2 / 11')).toBeInTheDocument();
+    expect(screen.getByText('2 / 13')).toBeInTheDocument();
     expect(screen.getByRole('group', { name: "Choose your company's three main values" })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Question progress' });
@@ -104,9 +106,9 @@ describe('Screening', () => {
     const user = userEvent.setup();
     render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('2 / 11')).toBeInTheDocument();
+    expect(screen.getByText('2 / 13')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByText('1 / 11')).toBeInTheDocument();
+    expect(screen.getByText('1 / 13')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toHaveValue('Acme');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
@@ -205,7 +207,7 @@ describe('Screening', () => {
     const user = userEvent.setup();
     render(<Screening role="founder" answers={founderAnswers} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={vi.fn()} generate={generate} />);
     await goToLastStep(user);
-    expect(screen.getByText('11 / 11')).toBeInTheDocument();
+    expect(screen.getByText('13 / 13')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Generate my profile' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
     expect(generate).toHaveBeenCalledWith('founder', founderAnswers);
@@ -228,7 +230,7 @@ describe('Screening', () => {
       <Screening role="founder" answers={withoutStage} onAnswer={vi.fn()} onGenerated={onGenerated} onManual={vi.fn()} generate={generate} />,
     );
     await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
-    expect(screen.getByText('3 / 11')).toBeInTheDocument();
+    expect(screen.getByText('3 / 13')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
     expect(generate).not.toHaveBeenCalled();
   });
@@ -254,7 +256,7 @@ describe('Screening', () => {
     render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
     screen.getByLabelText('Company name').focus();
     await user.keyboard('{Enter}');
-    expect(screen.getByText('2 / 11')).toBeInTheDocument();
+    expect(screen.getByText('2 / 13')).toBeInTheDocument();
   });
 });
 
@@ -335,5 +337,72 @@ describe('Screening: investor ticket range slider', () => {
     await goToTickets(user);
     fireEvent.change(screen.getByLabelText('Maximum ticket'), { target: { value: '0' } });
     expect(onAnswer).toHaveBeenLastCalledWith('tickets', ['500', '500']);
+  });
+});
+
+describe('Screening: founder scale questions (pressure/transparency/leadership)', () => {
+  const answeredThroughWhyInvest: Answers = {
+    companyName: 'Acme',
+    values: ['transparency', 'speed', 'integrity'],
+    stage: 'seed',
+    raise: ['2000', '5000'],
+    problem: 'P',
+    solution: 'S',
+    traction: 'T',
+    team: 'Team',
+    involvement: ['hands-on'],
+    whyInvest: 'W',
+  };
+
+  async function goToPressure(user: UserEvent) {
+    for (let i = 0; i < 10; i++) {
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+    }
+  }
+
+  it('shows 10 numbered radio options with both end labels on the pressure step', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={answeredThroughWhyInvest} />);
+    await goToPressure(user);
+    expect(screen.getByText('11 / 13')).toBeInTheDocument();
+    const group = screen.getByRole('group', { name: 'How do you handle high-pressure moments?' });
+    expect(within(group).getAllByRole('radio')).toHaveLength(10);
+    expect(within(group).getByLabelText('7')).toBeInTheDocument();
+    expect(within(group).getByText('I need calm to think clearly')).toBeInTheDocument();
+    expect(within(group).getByText('I do my best work under fire')).toBeInTheDocument();
+  });
+
+  it('blocks Next until an option is tapped', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={answeredThroughWhyInvest} />);
+    await goToPressure(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
+    expect(screen.getByText('11 / 13')).toBeInTheDocument();
+  });
+
+  it('clicking "7" reports onAnswer(\'pressure\', \'7\')', async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(
+      <Screening
+        role="founder"
+        answers={answeredThroughWhyInvest}
+        onAnswer={onAnswer}
+        onGenerated={vi.fn()}
+        onManual={vi.fn()}
+        generate={vi.fn(async () => result)}
+      />,
+    );
+    await goToPressure(user);
+    await user.click(screen.getByLabelText('7'));
+    expect(onAnswer).toHaveBeenLastCalledWith('pressure', '7');
+  });
+
+  it('marks the preset option as selected', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ ...answeredThroughWhyInvest, pressure: '7' }} />);
+    await goToPressure(user);
+    expect(screen.getByLabelText('7').closest('label')).toHaveClass('scale-option on');
   });
 });

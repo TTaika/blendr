@@ -18,7 +18,9 @@ const investorAnswers: Answers = {
   regions: 'Nordics',
   involvement: ['hands-on'],
   founderFit: 'Technical founders.',
-  workStyle: 'Hands-on and direct.',
+  pressure: '8',
+  transparency: '7',
+  leadership: '6',
 };
 const investorResult: KeywordResult = {
   summary: 'Nordic climate seed fund',
@@ -42,7 +44,9 @@ const founderAnswers: Answers = {
   team: 'Team',
   involvement: ['hands-on'],
   whyInvest: 'W',
-  workStyle: 'Fast',
+  pressure: '7',
+  transparency: '6',
+  leadership: '5',
 };
 
 const preload = (state: Partial<DemoState>) =>

@@ -36,7 +36,7 @@ const ROLE_RULES: Record<Role, string[]> = {
     'Pick 1-2 business model keywords.',
     'Pick 1-2 geography keywords for where the company sells today or next.',
     "Pick the involvement keywords matching the founder's answers to the involvement question (one per chosen option).",
-    'Pick 2-3 personality keywords from the work style, team and why-invest answers.',
+    'Pick 2-3 personality keywords from the three 1-10 scale answers (pressure, transparency, leadership), the team and the why-invest answers.',
     'The summary says what the company does, max 100 characters.',
   ],
   investor: [
@@ -45,7 +45,7 @@ const ROLE_RULES: Record<Role, string[]> = {
     'Pick 1-2 business model keywords the investor prefers.',
     'Pick 1-3 geography keywords from the regions answer.',
     "Pick the involvement keywords matching the investor's answers to the involvement question (one per chosen option).",
-    'Pick 2-3 personality keywords describing the founders they back and how they work.',
+    'Pick 2-3 personality keywords from the three 1-10 scale answers (pressure, transparency, leadership) and what makes them say yes to a founder.',
     "The summary describes the investor's focus, max 100 characters.",
   ],
 };

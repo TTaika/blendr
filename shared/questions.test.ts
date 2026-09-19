@@ -14,11 +14,13 @@ describe('questions', () => {
   it('defines the answer ids other modules rely on', () => {
     expect(ids(FOUNDER_QUESTIONS)).toEqual([
       'companyName', 'values', 'stage', 'raise', 'problem',
-      'solution', 'traction', 'team', 'involvement', 'whyInvest', 'workStyle',
+      'solution', 'traction', 'team', 'involvement', 'whyInvest',
+      'pressure', 'transparency', 'leadership',
     ]);
     expect(ids(INVESTOR_QUESTIONS)).toEqual([
       'investorName', 'fundName', 'stages', 'tickets', 'thesis',
-      'regions', 'involvement', 'founderFit', 'workStyle',
+      'regions', 'involvement', 'founderFit',
+      'pressure', 'transparency', 'leadership',
     ]);
   });
 
@@ -59,7 +61,7 @@ describe('questions', () => {
       stages: [],
       tickets: ['500', '5000'],
     });
-    expect(ids(missing)).toEqual(['fundName', 'stages', 'thesis', 'regions', 'involvement', 'founderFit', 'workStyle']);
+    expect(ids(missing)).toEqual(['fundName', 'stages', 'thesis', 'regions', 'involvement', 'founderFit', 'pressure', 'transparency', 'leadership']);
   });
 
   it('treats a valid two-stop range as answered, and anything else as missing', () => {
@@ -72,7 +74,9 @@ describe('questions', () => {
         regions: 'Nordics',
         involvement: 'hands-on',
         founderFit: 'F',
-        workStyle: 'W',
+        pressure: '5',
+        transparency: '5',
+        leadership: '5',
         tickets,
       }).map((q) => q.id);
     expect(missingFor(['500', '5000'])).not.toContain('tickets');
@@ -124,6 +128,35 @@ describe('questions', () => {
   it('flags a required values question as missing when empty, and present with at least one selection', () => {
     expect(missingRequired('founder', { values: [] }).map((q) => q.id)).toContain('values');
     expect(missingRequired('founder', { values: ['transparency'] }).map((q) => q.id)).not.toContain('values');
+  });
+
+  it('gives every scale question 1-10 bounds, required, and the tap help text', () => {
+    for (const qs of [FOUNDER_QUESTIONS, INVESTOR_QUESTIONS]) {
+      for (const id of ['pressure', 'transparency', 'leadership']) {
+        const q = qs.find((x) => x.id === id)!;
+        expect(q.kind).toBe('scale');
+        expect(q.required).toBe(true);
+        expect(q.scale).toEqual({ min: 1, max: 10, minLabel: expect.any(String), maxLabel: expect.any(String) });
+        expect(q.help).toBe('Tap a number from 1 to 10.');
+      }
+    }
+  });
+
+  it('flags a required scale question as missing unless the answer is an integer string in range', () => {
+    for (const bad of [undefined, '0', '11', 'x']) {
+      expect(missingRequired('founder', { pressure: bad } as never).map((q) => q.id)).toContain('pressure');
+    }
+    for (const good of ['1', '10']) {
+      expect(missingRequired('founder', { pressure: good }).map((q) => q.id)).not.toContain('pressure');
+    }
+  });
+
+  it('formats a scale answer with both end labels, and blanks an invalid one', () => {
+    const pressure = FOUNDER_QUESTIONS.find((q) => q.id === 'pressure')!;
+    expect(formatAnswer(pressure, '8')).toBe('8/10 (1 = I need calm to think clearly, 10 = I do my best work under fire)');
+    expect(formatAnswer(pressure, '11')).toBe('');
+    expect(formatAnswer(pressure, 'x')).toBe('');
+    expect(formatAnswer(pressure, undefined)).toBe('');
   });
 });
 

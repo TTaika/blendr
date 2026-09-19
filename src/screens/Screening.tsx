@@ -141,6 +141,42 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
     return <RangeField question={q} value={value} invalid={invalid} onChange={onChange} />;
   }
 
+  if (q.kind === 'scale' && q.scale) {
+    const { min, max, minLabel, maxLabel } = q.scale;
+    const selected = typeof value === 'string' ? value : undefined;
+    const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+    return (
+      <fieldset className="field" aria-invalid={invalid || undefined}>
+        <legend>{label}</legend>
+        {q.help && <p className="help">{q.help}</p>}
+        <div className="scale">
+          {numbers.map((n) => {
+            const numStr = String(n);
+            const on = selected === numStr;
+            return (
+              <label key={n} className={on ? 'scale-option on' : 'scale-option'}>
+                <input
+                  type="radio"
+                  className="sr-only"
+                  name={id}
+                  value={numStr}
+                  checked={on}
+                  aria-invalid={invalid || undefined}
+                  onChange={() => onChange(numStr)}
+                />
+                {n}
+              </label>
+            );
+          })}
+        </div>
+        <div className="scale-labels">
+          <span>{minLabel}</span>
+          <span>{maxLabel}</span>
+        </div>
+      </fieldset>
+    );
+  }
+
   if (q.kind === 'single' || q.kind === 'multi') {
     const selected = Array.isArray(value) ? value : value ? [value] : [];
     const max = q.kind === 'multi' ? q.maxSelections : undefined;

@@ -15,7 +15,9 @@ const founderAnswers: Answers = {
   team: 'Two engineers.',
   involvement: ['hands-on'],
   whyInvest: 'The market is exploding.',
-  workStyle: 'Fast and data-driven.',
+  pressure: '8',
+  transparency: '9',
+  leadership: '4',
 };
 
 describe('buildPrompt', () => {

@@ -436,3 +436,38 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   .swipe-card.under { animation: none; }
 }
 
+/* Visually hidden but still accessible (scale question radios) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Scale questions (pressure / transparency / leadership) */
+.scale { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.scale-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 32px;
+  max-width: 36px;
+  margin: 0 auto;
+  font-family: var(--font-display);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--border);
+  cursor: pointer;
+}
+.scale-option.on { background: var(--accent); color: var(--accent-ink); }
+.scale-option:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
+.scale-labels { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.scale-labels span:last-child { text-align: right; }
+

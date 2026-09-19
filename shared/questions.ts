@@ -1,7 +1,7 @@
 import { STAGES } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'range';
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'range' | 'scale';
 
 export interface QuestionOption {
   id: string;
@@ -11,6 +11,13 @@ export interface QuestionOption {
 export interface QuestionStop {
   value: number;
   label: string;
+}
+
+export interface QuestionScale {
+  min: number;
+  max: number;
+  minLabel: string;
+  maxLabel: string;
 }
 
 export interface Question {
@@ -24,6 +31,7 @@ export interface Question {
   options?: QuestionOption[];
   stops?: QuestionStop[];
   rangeLabels?: [string, string];
+  scale?: QuestionScale;
 }
 
 // Values are in € thousands.
@@ -75,6 +83,29 @@ export function formatRange(range: [number, number]): string {
   return min === max ? formatAmount(min) : `${formatAmount(min)} – ${formatAmount(max)}`;
 }
 
+/** Parses a scale answer (an integer string within the question's [min, max]). Returns null unless valid. */
+export function parseScale(question: Question, value: AnswerValue | undefined): number | null {
+  const scale = question.scale;
+  if (!scale || typeof value !== 'string') return null;
+  if (!/^-?\d+$/.test(value)) return null;
+  const n = Number(value);
+  if (n < scale.min || n > scale.max) return null;
+  return n;
+}
+
+const SCALE_HELP = 'Tap a number from 1 to 10.';
+
+function scaleQuestion(id: 'pressure' | 'transparency' | 'leadership', label: string, minLabel: string, maxLabel: string): Question {
+  return {
+    id,
+    label,
+    help: SCALE_HELP,
+    kind: 'scale',
+    required: true,
+    scale: { min: 1, max: 10, minLabel, maxLabel },
+  };
+}
+
 // Option ids are taxonomy keyword ids, so the chosen answer maps straight to a keyword.
 const INVOLVEMENT_OPTIONS: QuestionOption[] = [
   { id: 'hands-on', label: 'Hands-on: weekly sparring and operational help' },
@@ -111,7 +142,9 @@ export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'team', label: 'Your team and experience', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'involvement', label: 'What kind of investor involvement do you want?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'whyInvest', label: 'Why should an investor invest in you now?', kind: 'longtext', required: true, maxLength: 400 },
-  { id: 'workStyle', label: 'How would your co-founders describe the way you work?', help: 'Used to match personalities.', kind: 'longtext', required: true, maxLength: 300 },
+  scaleQuestion('pressure', 'How do you handle high-pressure moments?', 'I need calm to think clearly', 'I do my best work under fire'),
+  scaleQuestion('transparency', 'How openly does information flow in your company?', 'Need-to-know basis', 'Everything is shared, good and bad'),
+  scaleQuestion('leadership', 'What kind of leader are you?', 'Loose: I set direction and let go', 'Tight: I stay close to every decision'),
 ];
 
 export const INVESTOR_QUESTIONS: Question[] = [
@@ -123,7 +156,9 @@ export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'regions', label: 'Which regions do you invest in?', kind: 'text', required: true, maxLength: 120 },
   { id: 'involvement', label: 'How involved are you after investing?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'founderFit', label: 'What makes you say yes to a founder?', kind: 'longtext', required: true, maxLength: 300 },
-  { id: 'workStyle', label: 'How would founders you have backed describe working with you?', help: 'Used to match personalities.', kind: 'longtext', required: true, maxLength: 300 },
+  scaleQuestion('pressure', 'How hard do you push founders on targets?', 'Patient: long runway, light check-ins', 'Intense: clear targets, weekly check-ins'),
+  scaleQuestion('transparency', 'How much transparency do you expect from founders?', 'Quarterly highlights are enough', 'Bad news the same day it happens'),
+  scaleQuestion('leadership', 'How much say do you want in company decisions?', 'None: founders decide', 'A voice in every major call'),
 ];
 
 export function questionsFor(role: Role): Question[] {
@@ -139,6 +174,7 @@ export function missingRequired(role: Role, answers: Answers): Question[] {
   return questionsFor(role).filter((q) => {
     if (!q.required) return false;
     if (q.kind === 'range') return parseRange(answers[q.id]) === null;
+    if (q.kind === 'scale') return parseScale(q, answers[q.id]) === null;
     return isEmpty(answers[q.id]);
   });
 }
@@ -148,6 +184,12 @@ export function formatAnswer(question: Question, value: AnswerValue | undefined)
   if (question.kind === 'range') {
     const range = parseRange(value);
     return range ? formatRange(range) : '';
+  }
+  if (question.kind === 'scale') {
+    const n = parseScale(question, value);
+    if (n === null || !question.scale) return '';
+    const { min, max, minLabel, maxLabel } = question.scale;
+    return `${n}/${max} (${min} = ${minLabel}, ${max} = ${maxLabel})`;
   }
   const label = (id: string) => question.options?.find((o) => o.id === id)?.label ?? id;
   if (Array.isArray(value)) {
