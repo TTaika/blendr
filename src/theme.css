@@ -207,12 +207,13 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 .deck { flex: 1; min-height: 0; position: relative; }
 .swipe-card {
   height: 100%;
-  overflow-y: auto;
   touch-action: pan-y; /* browser scrolls vertically, we handle horizontal drags */
   user-select: none;
   -webkit-user-select: none;
-  will-change: transform;
+  will-change: transform, opacity;
 }
+/* The card content scrolls inside the moving frame, so the stamps stay put on the card. */
+.swipe-scroll { height: 100%; overflow-y: auto; touch-action: pan-y; }
 .swipe-card .card { min-height: 100%; }
 .stamp {
   position: absolute;

@@ -12,6 +12,17 @@ export function swipeDecision(dx: number, threshold = SWIPE_THRESHOLD): Decision
   return null;
 }
 
+/** Largest tilt of the top card, in degrees, whatever the screen width. */
+export const MAX_TILT = 14;
+
+/** Card transform for a horizontal drag offset: follows the finger, tilt capped at MAX_TILT. */
+export function cardTransform(dx: number): string {
+  const tilt = Math.max(-MAX_TILT, Math.min(MAX_TILT, dx / 12));
+  return `translateX(${dx}px) rotate(${Math.round(tilt * 100) / 100}deg)`;
+}
+
+const EXIT_EASING = 'cubic-bezier(0.2, 0.7, 0.3, 1)';
+
 export interface SwipeProps {
   entries: FeedEntry[];
   companies: Map<string, Company>;
@@ -37,7 +48,7 @@ export function Swipe({
   onOpenConnect,
   onDismissPrompt,
   onReviewPassed,
-  exitMs = 220,
+  exitMs = 320,
 }: SwipeProps) {
   const top = entries[0];
   const company = top ? companies.get(top.companyId) : undefined;
@@ -48,12 +59,17 @@ export function Swipe({
   const [exiting, setExiting] = useState<Decision | null>(null);
   const [burst, setBurst] = useState<{ id: number; companyName: string } | null>(null);
   const drag = useRef<{ startX: number; pointerId: number } | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const animRef = useRef<Animation | null>(null);
+  const exitingRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const burstTimerRef = useRef<number | null>(null);
   const burstId = useRef(0);
 
   useEffect(() => {
     return () => {
+      // Unmounting cancels a pending decision instead of applying it later.
+      animRef.current?.cancel();
       if (timerRef.current !== null) {
         window.clearTimeout(timerRef.current);
       }
@@ -64,7 +80,8 @@ export function Swipe({
   }, []);
 
   function decide(decision: Decision) {
-    if (!top || exiting) return;
+    if (!top || exitingRef.current) return;
+    exitingRef.current = true;
     setExiting(decision);
     if (decision === 'like' && company) {
       burstId.current += 1;
@@ -77,13 +94,39 @@ export function Swipe({
         setBurst(null);
       }, 900);
     }
-    timerRef.current = window.setTimeout(() => {
+    const finish = () => {
+      animRef.current = null;
       timerRef.current = null;
+      exitingRef.current = false;
       setExiting(null);
       setDx(0);
       if (decision === 'like') onLike(top.companyId);
       else onDiscard(top.companyId);
-    }, exitMs);
+    };
+    if (exitMs <= 0) {
+      finish();
+      return;
+    }
+    const el = cardRef.current;
+    if (!el || typeof el.animate !== 'function') {
+      timerRef.current = window.setTimeout(finish, exitMs);
+      return;
+    }
+    // Throw the card about 1.2 card-widths from where the finger left it, fading out.
+    // Distance and tilt depend on the card, not the window, so phone and laptop match.
+    const sign = decision === 'like' ? 1 : -1;
+    const distance = sign * (el.offsetWidth || 360) * 1.2;
+    const anim = el.animate(
+      [
+        { transform: cardTransform(dx), opacity: 1 },
+        { transform: `translateX(${distance}px) rotate(${sign * MAX_TILT}deg)`, opacity: 0 },
+      ],
+      { duration: exitMs, easing: EXIT_EASING, fill: 'forwards' },
+    );
+    animRef.current = anim;
+    anim.finished.then(finish, () => {
+      // Cancelled on unmount: drop the decision.
+    });
   }
 
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
@@ -114,10 +157,10 @@ export function Swipe({
     setDx(0);
   }
 
-  const offset = exiting === 'like' ? window.innerWidth : exiting === 'discard' ? -window.innerWidth : dx;
-  const p = Math.min(Math.abs(offset) / SWIPE_THRESHOLD, 1);
-  const stampOpacity = (sign: 1 | -1) => Math.min(Math.max((sign * offset) / SWIPE_THRESHOLD, 0), 1);
   const dragRatio = exiting === 'like' ? 1 : exiting === 'discard' ? -1 : Math.max(-1, Math.min(1, dx / SWIPE_THRESHOLD));
+  // Reveal progress of the next card: follows the drag, completes during the exit.
+  const p = Math.abs(dragRatio);
+  const stampOpacity = (sign: 1 | -1) => Math.max(sign * dragRatio, 0);
   const dragStyle = {
     '--drag': dragRatio,
     '--drag-right': Math.max(dragRatio, 0),
@@ -153,32 +196,37 @@ export function Swipe({
                 style={{
                   transform: `translateY(${14 * (1 - p)}px) scale(${0.94 + 0.06 * p})`,
                   opacity: 0.55 + 0.45 * p,
-                  transition: dragging ? 'none' : `transform ${exitMs}ms ease, opacity ${exitMs}ms ease`,
+                  transition: dragging ? 'none' : `transform ${exitMs}ms ${EXIT_EASING}, opacity ${exitMs}ms ${EXIT_EASING}`,
                 }}
               >
-                <CompanyCard company={nextCompany} score={next.score} matched={next.matched} />
+                <div className="swipe-scroll">
+                  <CompanyCard company={nextCompany} score={next.score} matched={next.matched} />
+                </div>
               </div>
             )}
             <div
               key={top.companyId}
+              ref={cardRef}
               className="swipe-card"
               style={{
-                transform: `translateX(${offset}px) rotate(${offset / 20}deg)`,
-                transition: dragging ? 'none' : `transform ${exitMs}ms ease`,
+                transform: cardTransform(dx),
+                transition: dragging || exiting ? 'none' : 'transform 200ms ease-out',
               }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerCancel}
             >
-              <CompanyCard company={company} score={top.score} matched={top.matched} />
+              <div className="swipe-scroll">
+                <CompanyCard company={company} score={top.score} matched={top.matched} />
+              </div>
+              <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
+                MATCH
+              </span>
+              <span className="stamp stamp-pass" aria-hidden="true" style={{ opacity: stampOpacity(-1) }}>
+                PASS
+              </span>
             </div>
-            <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
-              MATCH
-            </span>
-            <span className="stamp stamp-pass" aria-hidden="true" style={{ opacity: stampOpacity(-1) }}>
-              PASS
-            </span>
           </div>
           <div className="swipe-actions">
             <button type="button" className="btn round pass" aria-label="Pass" onClick={() => decide('discard')}>

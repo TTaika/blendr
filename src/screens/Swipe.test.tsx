@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Company, FeedEntry } from '../../shared/types';
 import { FIXTURE_COMPANY_BY_ID, fixtureCompany, fixtureCompany2 } from '../test/fixtures';
-import { Swipe, swipeDecision } from './Swipe';
+import { MAX_TILT, Swipe, cardTransform, swipeDecision } from './Swipe';
 
 const entries: FeedEntry[] = [
   { companyId: fixtureCompany.id, score: 80, matched: ['nordics'] },
@@ -37,7 +37,26 @@ describe('swipeDecision', () => {
   });
 });
 
+describe('cardTransform', () => {
+  it('follows the drag and caps the tilt at MAX_TILT degrees', () => {
+    expect(cardTransform(0)).toBe('translateX(0px) rotate(0deg)');
+    expect(cardTransform(60)).toBe('translateX(60px) rotate(5deg)');
+    expect(cardTransform(1000)).toBe(`translateX(1000px) rotate(${MAX_TILT}deg)`);
+    expect(cardTransform(-1000)).toBe(`translateX(-1000px) rotate(-${MAX_TILT}deg)`);
+  });
+});
+
 describe('Swipe', () => {
+  it('keeps the stamps on the top card so they leave with it', () => {
+    setup();
+    const deck = screen.getByRole('main').querySelector('.deck') as HTMLElement;
+    const topCard = deck.querySelector('.swipe-card:not(.under)') as HTMLElement;
+    expect(topCard.querySelector('.stamp-like')).not.toBeNull();
+    expect(topCard.querySelector('.stamp-pass')).not.toBeNull();
+    expect(deck.querySelector('.swipe-card.under .stamp')).toBeNull();
+    expect(deck.querySelectorAll(':scope > .stamp')).toHaveLength(0);
+  });
+
   it('shows only the top company with its match score', () => {
     setup();
     expect(screen.getByText('Ranked for Birch Ventures')).toBeInTheDocument();
