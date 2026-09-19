@@ -355,57 +355,65 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   .aurora-a, .aurora-b { animation: none; }
 }
 
-/* Match animation */
+/* Match animation: band and word share the screen's vertical centre */
 .match-burst {
   position: fixed;
   inset: 0;
   z-index: 20;
-  display: grid;
-  place-items: center;
   pointer-events: none;
   text-align: center;
   animation: match-burst-fade 900ms ease forwards;
 }
 .match-band {
   position: absolute;
-  inset: 0;
-  margin: auto 0;
+  left: -15vw;
+  right: -15vw;
+  top: 50%;
   height: 34vh;
+  margin-top: -17vh;
   background: var(--accent);
-  transform: scaleX(0) rotate(-12deg);
+  transform: rotate(-12deg) scaleX(0);
   transform-origin: left center;
   animation: match-band-sweep 320ms ease-out forwards;
 }
 .match-word {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin: 0;
+  line-height: 1;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(3.5rem, 18vw, 5rem);
   color: var(--accent-ink);
-  margin: 0;
   opacity: 0;
-  transform: scale(0.85);
+  transform: translateY(-50%) scale(0.85);
   animation: match-word-in 260ms ease-out 120ms forwards;
 }
 .match-with {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% + 17vh + 48px);
+  margin: 0;
   color: var(--text);
-  margin: 8px 0 0;
 }
 @keyframes match-band-sweep {
-  0% { transform: scaleX(0) rotate(-12deg); }
-  100% { transform: scaleX(1) rotate(-12deg); }
+  0% { transform: rotate(-12deg) scaleX(0); }
+  100% { transform: rotate(-12deg) scaleX(1); }
 }
 @keyframes match-word-in {
-  0% { opacity: 0; transform: scale(0.85); }
-  100% { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; transform: translateY(-50%) scale(0.85); }
+  100% { opacity: 1; transform: translateY(-50%) scale(1); }
 }
 @keyframes match-burst-fade {
   0%, 72% { opacity: 1; }
   100% { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .match-band { animation: none; transform: scaleX(1) rotate(-12deg); }
-  .match-word { animation: none; opacity: 1; transform: scale(1); }
+  .match-band { animation: none; transform: rotate(-12deg) scaleX(1); }
+  .match-word { animation: none; opacity: 1; transform: translateY(-50%) scale(1); }
   .match-burst { animation: match-burst-fade 900ms linear forwards; }
 }
+
