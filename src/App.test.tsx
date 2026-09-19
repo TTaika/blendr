@@ -33,7 +33,7 @@ const investorResult: KeywordResult = {
 };
 const founderAnswers: Answers = {
   companyName: 'Acme',
-  values: ['Payments trust', 'Baker-first support', 'Simple pricing'],
+  values: ['transparency', 'speed', 'integrity'],
   stage: 'seed',
   raise: 't-500k-2m',
   problem: 'P',

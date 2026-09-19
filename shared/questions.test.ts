@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, formatAnswer, missingRequired, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, VALUE_OPTIONS, formatAnswer, missingRequired, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
@@ -22,8 +22,12 @@ describe('questions', () => {
     ]);
   });
 
-  it('limits each company value to 30 characters', () => {
-    expect(FOUNDER_QUESTIONS.find((q) => q.id === 'values')?.maxLength).toBe(30);
+  it('makes the values question a multi-choice with at most 3 selections from 14 options', () => {
+    const values = FOUNDER_QUESTIONS.find((q) => q.id === 'values')!;
+    expect(values.kind).toBe('multi');
+    expect(values.maxSelections).toBe(3);
+    expect(values.options).toEqual(VALUE_OPTIONS);
+    expect(VALUE_OPTIONS).toHaveLength(14);
   });
 
   it('gives every choice question options, and involvement options are taxonomy keywords', () => {
@@ -60,15 +64,12 @@ describe('questions', () => {
     expect(formatAnswer(team, undefined)).toBe('');
   });
 
-  it('formats a values answer by trimming entries and joining with a comma', () => {
-    const values = FOUNDER_QUESTIONS.find((q) => q.id === 'values')!;
-    expect(formatAnswer(values, [' A ', 'B', 'C'])).toBe('A, B, C');
-    expect(formatAnswer(values, [' A ', '', 'C'])).toBe('A, C');
+  it('formats a values answer by mapping option ids to labels', () => {
+    expect(formatAnswer(FOUNDER_QUESTIONS.find((q) => q.id === 'values')!, ['transparency', 'integrity'])).toBe('Transparency, Integrity');
   });
 
-  it('flags a required values question as missing unless it has exactly 3 non-empty trimmed entries', () => {
-    expect(missingRequired('founder', { values: ['A', '', 'C'] }).map((q) => q.id)).toContain('values');
-    expect(missingRequired('founder', { values: ['A', 'B'] }).map((q) => q.id)).toContain('values');
-    expect(missingRequired('founder', { values: ['A', 'B', 'C'] }).map((q) => q.id)).not.toContain('values');
+  it('flags a required values question as missing when empty, and present with at least one selection', () => {
+    expect(missingRequired('founder', { values: [] }).map((q) => q.id)).toContain('values');
+    expect(missingRequired('founder', { values: ['transparency'] }).map((q) => q.id)).not.toContain('values');
   });
 });

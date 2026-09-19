@@ -62,7 +62,7 @@ describe('Screening', () => {
     expect(screen.getByText('1 / 11')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toBeInTheDocument();
     expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: "List your company's three main values" })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: "Choose your company's three main values" })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Question progress' });
     expect(bar).toHaveAttribute('aria-valuemin', '1');
@@ -94,7 +94,7 @@ describe('Screening', () => {
     await user.type(screen.getByLabelText('Company name'), 'Acme');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('2 / 11')).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: "List your company's three main values" })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: "Choose your company's three main values" })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Question progress' });
     expect(bar).toHaveAttribute('aria-valuenow', '2');
@@ -112,17 +112,33 @@ describe('Screening', () => {
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
   });
 
-  it('renders the values fieldset with three labelled inputs once reached', async () => {
+  it('shows the values step as 14 checkbox options', async () => {
     const user = userEvent.setup();
     render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    const group = screen.getByRole('group', { name: "List your company's three main values" });
-    expect(within(group).getByLabelText('Value 1')).toBeInTheDocument();
-    expect(within(group).getByLabelText('Value 2')).toBeInTheDocument();
-    expect(within(group).getByLabelText('Value 3')).toBeInTheDocument();
+    const group = screen.getByRole('group', { name: "Choose your company's three main values" });
+    expect(within(group).getAllByRole('checkbox')).toHaveLength(14);
   });
 
-  it('reports a 3-element array when typing into a values input', async () => {
+  it('disables unselected options once 3 are picked, keeps selected ones enabled, and shows the count', async () => {
+    const user = userEvent.setup();
+    render(
+      <Controlled
+        role="founder"
+        initial={{ companyName: 'Acme', values: ['transparency', 'speed', 'integrity'] }}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    const craftsmanship = screen.getByLabelText('Craftsmanship');
+    expect(craftsmanship).toBeDisabled();
+    expect(craftsmanship.closest('label')).toHaveClass('option-disabled');
+    const transparency = screen.getByLabelText('Transparency');
+    expect(transparency).toBeEnabled();
+    expect(transparency.closest('label')).not.toHaveClass('option-disabled');
+    expect(screen.getByText('3 / 3 selected')).toBeInTheDocument();
+  });
+
+  it('reports a one-element array when picking the first value option', async () => {
     const user = userEvent.setup();
     const onAnswer = vi.fn();
     render(
@@ -136,8 +152,8 @@ describe('Screening', () => {
       />,
     );
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.type(screen.getByLabelText('Value 2'), 'X');
-    expect(onAnswer).toHaveBeenLastCalledWith('values', ['', 'X', '']);
+    await user.click(screen.getByLabelText('Transparency'));
+    expect(onAnswer).toHaveBeenLastCalledWith('values', ['transparency']);
   });
 
   it('toggles multi-choice options for the investor stages question', async () => {

@@ -6,7 +6,7 @@ const profile: Profile = {
   role: 'founder',
   answers: {
     companyName: ' Acme ',
-    values: [' A ', 'B', '', 'C', 'D'],
+    values: ['transparency', 'bogus-id', 'speed', 'integrity', 'craftsmanship'],
     stage: 'series-a',
     raise: 't-5m-15m',
     problem: 'P',
@@ -35,8 +35,8 @@ describe('companyFromFounderProfile', () => {
       keywords: [{ id: 'fintech', reason: 'Payments' }],
       keyNumbers: [{ label: 'Traction', value: '€1M ARR' }],
     });
-    // trims each entry, drops empties, and keeps only the first 3
-    expect(c.values).toEqual(['A', 'B', 'C']);
+    // maps option ids to labels, drops unknown ids, and keeps only the first 3
+    expect(c.values).toEqual(['Transparency', 'Speed of execution', 'Integrity']);
   });
 
   it('uses safe fallbacks for missing answers', () => {

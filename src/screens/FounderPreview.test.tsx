@@ -7,7 +7,7 @@ import { FounderPreview } from './FounderPreview';
 
 const profile: Profile = {
   role: 'founder',
-  answers: { companyName: 'Acme', values: ['Payments trust', 'Baker-first support', 'Simple pricing'], stage: 'seed', raise: 't-500k-2m' },
+  answers: { companyName: 'Acme', values: ['transparency', 'speed', 'integrity'], stage: 'seed', raise: 't-500k-2m' },
   summary: '',
   keywords: [
     { id: 'fintech', reason: 'Payments', source: 'ai' },
@@ -23,7 +23,7 @@ describe('FounderPreview', () => {
     const { container } = render(<FounderPreview profile={profile} onStartOver={vi.fn()} />);
     expect(screen.getByRole('heading', { name: "You're live!" })).toBeInTheDocument();
     expect(screen.getByRole('article', { name: 'Acme' })).toBeInTheDocument();
-    expect(screen.getByText('Payments trust · Baker-first support · Simple pricing')).toBeInTheDocument();
+    expect(screen.getByText('Transparency · Speed of execution · Integrity')).toBeInTheDocument();
     expect(container.querySelectorAll('.chip-label')).toHaveLength(5);
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
   });

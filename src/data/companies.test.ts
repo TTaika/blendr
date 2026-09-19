@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { COMPANIES, COMPANY_BY_ID } from './companies';
 import { getKeyword, isKeywordId, isStageId, isTicketId } from '../../shared/taxonomy';
+import { VALUE_OPTIONS } from '../../shared/questions';
+
+const VALUE_LABELS = new Set(VALUE_OPTIONS.map((o) => o.label));
 
 describe('test companies', () => {
   it('has 12 companies with unique ids, all indexed by id', () => {
@@ -10,11 +13,10 @@ describe('test companies', () => {
   });
 
   it.each(COMPANIES.map((c) => [c.id, c] as const))('%s is well-formed', (_id, c) => {
-    expect(c.values).toHaveLength(3);
+    expect(c.values.length).toBeGreaterThanOrEqual(1);
+    expect(c.values.length).toBeLessThanOrEqual(3);
     for (const v of c.values) {
-      expect(v.trim()).toBe(v);
-      expect(v).not.toBe('');
-      expect(v.length).toBeLessThanOrEqual(30);
+      expect(VALUE_LABELS.has(v), `unknown value label ${v}`).toBe(true);
     }
     expect(isStageId(c.stage)).toBe(true);
     expect(isTicketId(c.raise)).toBe(true);
