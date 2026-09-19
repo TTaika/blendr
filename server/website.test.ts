@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MAX_WEBSITE_CHARS, createWebsiteFetcher, htmlToText, normalizeUrl } from './website';
-
-const response = (body: string, ok = true) => ({ ok, text: async () => body }) as Response;
+import { MAX_HTML_BYTES, MAX_WEBSITE_CHARS, createWebsiteFetcher, htmlToText, normalizeUrl } from './website';
 
 describe('htmlToText', () => {
   it('drops scripts, styles and tags and decodes common entities', () => {
@@ -21,23 +19,40 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl('not a url')).toBeNull();
     expect(normalizeUrl('localhost')).toBeNull();
   });
+
+  it('rejects IP literals and .local/.localhost hostnames', () => {
+    expect(normalizeUrl('127.0.0.1')).toBeNull();
+    expect(normalizeUrl('http://169.254.169.254/latest')).toBeNull();
+    expect(normalizeUrl('0.0.0.0')).toBeNull();
+    expect(normalizeUrl('http://[::1]/')).toBeNull();
+    expect(normalizeUrl('printer.local')).toBeNull();
+  });
 });
 
 describe('createWebsiteFetcher', () => {
   it('fetches the page, converts it to text and truncates it', async () => {
-    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => response(`<p>${'a'.repeat(MAX_WEBSITE_CHARS + 50)}</p>`));
+    const body = `<p>${'a'.repeat(MAX_WEBSITE_CHARS + 50)}</p>`;
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => new Response(body, { status: 200 }));
     const text = await createWebsiteFetcher(fetchImpl as unknown as typeof fetch)('acme.example');
     expect(fetchImpl).toHaveBeenCalledWith('https://acme.example/', expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(text).toHaveLength(MAX_WEBSITE_CHARS);
   });
 
   it('returns null on HTTP errors, network errors and invalid urls', async () => {
-    const notOk = createWebsiteFetcher((async () => response('x', false)) as unknown as typeof fetch);
+    const notOk = createWebsiteFetcher((async () => new Response('x', { status: 404 })) as unknown as typeof fetch);
     const offline = createWebsiteFetcher((async () => { throw new Error('offline'); }) as unknown as typeof fetch);
     const spy = vi.fn();
     expect(await notOk('acme.example')).toBeNull();
     expect(await offline('acme.example')).toBeNull();
     expect(await createWebsiteFetcher(spy as unknown as typeof fetch)('not a url')).toBeNull();
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('handles large responses by capping bytes without error', async () => {
+    const largeBody = '<p>' + 'x'.repeat(MAX_HTML_BYTES + 50000) + '</p>';
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => new Response(largeBody, { status: 200 }));
+    const text = await createWebsiteFetcher(fetchImpl as unknown as typeof fetch)('acme.example');
+    expect(text).not.toBeNull();
+    expect(text).toHaveLength(MAX_WEBSITE_CHARS);
   });
 });
