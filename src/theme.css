@@ -131,3 +131,43 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 }
 .liked-name { font-weight: 600; }
 .liked-meta { font-size: 0.85rem; }
+/* Swipe */
+.swipe { height: 100vh; height: 100dvh; min-height: 0; }
+.deck { flex: 1; min-height: 0; position: relative; }
+.swipe-card {
+  height: 100%;
+  overflow-y: auto;
+  touch-action: pan-y; /* browser scrolls vertically, we handle horizontal drags */
+  border-radius: var(--radius);
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+}
+.swipe-card .card { min-height: 100%; }
+.stamp {
+  position: absolute;
+  top: 24px;
+  padding: 4px 12px;
+  border: 3px solid currentColor;
+  border-radius: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+.stamp-like { left: 20px; color: var(--accent); transform: rotate(-12deg); }
+.stamp-pass { right: 20px; color: var(--danger); transform: rotate(12deg); }
+.swipe-actions { display: flex; justify-content: center; gap: 28px; }
+.round { width: 64px; height: 64px; border-radius: 50%; padding: 0; font-size: 1.5rem; }
+.like { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.pass { color: var(--danger); }
+.empty { display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg-deep) 80%, transparent);
+}
+.dialog { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
