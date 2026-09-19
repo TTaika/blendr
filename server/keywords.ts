@@ -35,7 +35,7 @@ const ROLE_RULES: Record<Role, string[]> = {
     'Pick 1-2 sector keywords describing what the company builds.',
     'Pick 1-2 business model keywords.',
     'Pick 1-2 geography keywords for where the company sells today or next.',
-    "Pick exactly 1 involvement keyword: the one matching the founder's answer to the involvement question.",
+    "Pick the involvement keywords matching the founder's answers to the involvement question (one per chosen option).",
     'Pick 2-3 personality keywords from the work style, team and why-invest answers.',
     'The summary says what the company does, max 100 characters.',
   ],
@@ -44,7 +44,7 @@ const ROLE_RULES: Record<Role, string[]> = {
     'Pick 1-4 sector keywords from the thesis.',
     'Pick 1-2 business model keywords the investor prefers.',
     'Pick 1-3 geography keywords from the regions answer.',
-    "Pick exactly 1 involvement keyword: the one matching the investor's answer to the involvement question.",
+    "Pick the involvement keywords matching the investor's answers to the involvement question (one per chosen option).",
     'Pick 2-3 personality keywords describing the founders they back and how they work.',
     "The summary describes the investor's focus, max 100 characters.",
   ],
@@ -108,10 +108,13 @@ export async function generateKeywords(
   const website = typeof answers.website === 'string' && answers.website.trim() ? await deps.fetchWebsite(answers.website) : null;
   const parsed = parseKeywordResponse(await deps.model(buildPrompt(role, answers, website), KEYWORD_SCHEMA));
 
-  // The involvement answer is a taxonomy id; make sure it is always present even if the model skipped it.
+  // The involvement answer is one or more taxonomy ids; make sure each is always present even if the model skipped it.
   const involvement = answers.involvement;
-  if (typeof involvement === 'string' && isKeywordId(involvement) && !parsed.keywords.some((k) => k.id === involvement)) {
-    parsed.keywords.push({ id: involvement, reason: 'You chose this in the questionnaire.' });
+  const chosenIds = Array.isArray(involvement) ? involvement : typeof involvement === 'string' ? [involvement] : [];
+  for (const id of chosenIds) {
+    if (isKeywordId(id) && !parsed.keywords.some((k) => k.id === id)) {
+      parsed.keywords.push({ id, reason: 'You chose this in the questionnaire.' });
+    }
   }
   return { ...parsed, websiteUsed: website !== null };
 }

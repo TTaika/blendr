@@ -16,7 +16,7 @@ const investorAnswers: Answers = {
   tickets: ['2000', '5000'],
   thesis: 'Climate software for the energy transition.',
   regions: 'Nordics',
-  involvement: 'hands-on',
+  involvement: ['hands-on'],
   founderFit: 'Technical founders.',
   workStyle: 'Hands-on and direct.',
 };
@@ -40,7 +40,7 @@ const founderAnswers: Answers = {
   solution: 'S',
   traction: 'T',
   team: 'Team',
-  involvement: 'hands-on',
+  involvement: ['hands-on'],
   whyInvest: 'W',
   workStyle: 'Fast',
 };
