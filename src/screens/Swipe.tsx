@@ -213,6 +213,7 @@ export function Swipe({
                   company={company}
                   matched={top.matched}
                   fit={top.score !== undefined ? personalityFit(top.matched) : undefined}
+                  autoplayVideo
                 />
               </div>
               <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
