@@ -41,7 +41,7 @@ Free services sleep after ~15 idle minutes; the first visit afterwards takes abo
 ## Demo modes
 
 - **I'm a founder**: questionnaire → AI keywords (editable) → preview of the card investors would see
-- **I'm an investor**: questionnaire → AI keywords (editable) → swipe feed ranked by match % → Connect
+- **I'm an investor**: questionnaire → AI keywords (editable) → swipe feed ranked by personality fit → Connect
 - **Skip to swiping**: the test companies in random order
 
 Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for details, and tap a keyword to see why it was assigned. Every 5 likes you are asked whether to open Connect. **Start over** (bottom-left) clears this phone's data.
