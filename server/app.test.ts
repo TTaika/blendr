@@ -40,6 +40,24 @@ describe('POST /api/keywords', () => {
   });
 });
 
+describe('POST /api/keywords rate limit', () => {
+  it('allows 20 requests per IP per minute, checked before validation', async () => {
+    let now = 1_000_000;
+    const app = createApp({ model: okModel, fetchWebsite: noWebsite, now: () => now });
+    const post = (body: object = { role: 'founder', answers: {} }) => request(app).post('/api/keywords').send(body);
+
+    for (let i = 0; i < 20; i++) expect((await post()).status).toBe(200);
+    const limited = await post();
+    expect(limited.status).toBe(429);
+    expect(limited.body).toEqual({ error: 'Too many requests. Please wait a minute and retry.' });
+    expect((await post({ role: 'admin' })).status).toBe(429);
+    expect((await request(app).get('/api/health')).status).toBe(200);
+
+    now += 60_000;
+    expect((await post()).status).toBe(200);
+  });
+});
+
 describe('GET /api/health', () => {
   const health = async (app: ReturnType<typeof createApp>) => (await request(app).get('/api/health')).body;
 

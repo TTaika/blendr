@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import type { Answers } from '../shared/types';
 import { generateKeywords, type ModelCall } from './keywords';
 import type { SelfTest } from './selfTest';
@@ -11,6 +11,29 @@ export interface AppDeps {
   fetchWebsite: FetchWebsite;
   staticDir?: string; // built SPA (dist/) in production
   getSelfTest?: () => SelfTest; // startup Gemini check, reported by /api/health
+  now?: () => number; // clock for the rate limiter (tests)
+}
+
+const RATE_LIMIT = 20;
+const RATE_WINDOW_MS = 60_000;
+
+// In-memory fixed window per client IP, so one device cannot burn the Gemini quota.
+function rateLimit(now: () => number): RequestHandler {
+  const windows = new Map<string, { start: number; count: number }>();
+  return (req, res, next) => {
+    const key = req.ip ?? '';
+    const t = now();
+    const win = windows.get(key);
+    if (!win || t - win.start >= RATE_WINDOW_MS) {
+      windows.set(key, { start: t, count: 1 });
+    } else if (win.count >= RATE_LIMIT) {
+      res.status(429).json({ error: 'Too many requests. Please wait a minute and retry.' });
+      return;
+    } else {
+      win.count++;
+    }
+    next();
+  };
 }
 
 function isAnswers(value: unknown): value is Answers {
@@ -29,7 +52,7 @@ export function createApp(deps: AppDeps) {
     res.json({ ok: true, gemini: deps.model !== null, selfTest });
   });
 
-  app.post('/api/keywords', async (req, res) => {
+  app.post('/api/keywords', rateLimit(deps.now ?? Date.now), async (req, res) => {
     const { role, answers } = req.body ?? {};
     if ((role !== 'founder' && role !== 'investor') || !isAnswers(answers)) {
       res.status(400).json({ error: 'Expected { role: "founder" | "investor", answers: object }' });
