@@ -44,9 +44,13 @@ Free services sleep after ~15 idle minutes; the first visit afterwards takes abo
 - **I'm an investor**: questionnaire → AI keywords (editable) → swipe feed ranked by personality fit → Connect
 - **Skip to swiping**: the test companies in random order
 
-Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for details, and tap a keyword to see why it was assigned. Every 5 likes you are asked whether to open Connect. **Start over** (bottom-left) clears this phone's data.
+Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for details, and tap a keyword to see why it was assigned. Every 5 likes you are asked whether to open Connect. **Start over** (bottom-left; top-right on questionnaire and review steps) clears this phone's data.
 
 Once there are likes, Connect has a **Book a meeting** button. It shows a simulated hand-off to My Slush: a "Redirecting you to My Slush" screen with a loading circle that never finishes. Nothing connects to My Slush, and nothing is booked or sent. **Restart the demo** at the bottom of that screen clears this phone's data straight away (no confirmation) and goes back to the start.
+
+A pass plays a short swoosh and a like (match) a bright pling. Both are synthesized with the Web Audio API in `src/lib/sounds.ts` (no audio files) and play as the card leaves; where Web Audio is missing or blocked, swiping is silent, and an iPhone's silent switch mutes them.
+
+Pitch videos start by themselves once at least half of the video is on screen (top swipe card, the Connect detail view and the founder's "You're live!" card) and pause when scrolled away, resuming only if they paused themselves. After you pause one or it ends, replay it with the video controls. Browsers that block autoplay with sound (notably iPhone Safari) start it muted; tap the speaker to unmute.
 
 ## Replacing the draft content
 

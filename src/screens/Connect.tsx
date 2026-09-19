@@ -28,7 +28,7 @@ export function Connect({ companies, onBackToSwiping, onBookMeeting }: ConnectPr
           <span className="spacer" />
           {backButton}
         </div>
-        <CompanyCard company={selected} showContact allKeywords />
+        <CompanyCard company={selected} showContact allKeywords autoplayVideo />
       </main>
     );
   }
