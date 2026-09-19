@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PAGE_TITLES, missingRequired, parseRange, questionSteps, type Question } from '../../shared/questions';
+import { PAGE_TITLES, askedAnswers, missingRequired, parseAmount, parseRange, questionSteps, type Question } from '../../shared/questions';
 import type { AnswerValue, Answers, KeywordResult, Role } from '../../shared/types';
 import { requestKeywords, type RequestKeywords } from '../lib/api';
 import { checkPitchVideo, readVideoDuration as readDurationInBrowser, type ReadVideoDuration } from '../lib/pitchVideo';
@@ -38,9 +38,11 @@ export function Screening({
   generate = requestKeywords,
   readVideoDuration = readDurationInBrowser,
 }: ScreeningProps) {
-  const steps = questionSteps(role);
+  // The steps follow the answers: picking Seed adds the raised question's step, Pre-seed drops it.
+  const steps = questionSteps(role, answers);
   const total = steps.length;
-  const [step, setStep] = useState(0);
+  const [stepIndex, setStep] = useState(0);
+  const step = Math.min(stepIndex, total - 1); // in case a later step was dropped
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set());
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export function Screening({
     }
     setStatus({ kind: 'loading' });
     try {
-      const result = await generate(role, answers);
+      const result = await generate(role, askedAnswers(role, answers));
       setStatus({ kind: 'idle' });
       onGenerated(result);
     } catch (err) {
@@ -88,14 +90,14 @@ export function Screening({
     if (isLast) {
       void runGenerate();
     } else {
-      setStep((s) => s + 1);
+      setStep(step + 1);
     }
   }
 
   function goBack() {
     setInvalidIds(new Set());
     setAlertMessage(null);
-    setStep((s) => Math.max(0, s - 1));
+    setStep(Math.max(0, step - 1));
   }
 
   return (
@@ -190,6 +192,10 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
 
   if (q.kind === 'range') {
     return <RangeField question={q} value={value} invalid={invalid} onChange={onChange} />;
+  }
+
+  if (q.kind === 'amount') {
+    return <AmountField question={q} value={value} invalid={invalid} onChange={onChange} />;
   }
 
   if (q.kind === 'scale' && q.scale) {
@@ -353,6 +359,53 @@ function RangeField({ question: q, value, invalid, onChange }: FieldProps) {
         />
       </div>
     </fieldset>
+  );
+}
+
+// One handle on the range slider's track and stops, with the amount shown above it.
+function AmountField({ question: q, value, invalid, onChange }: FieldProps) {
+  const id = `q-${q.id}`;
+  const label = q.required ? q.label : `${q.label} (optional)`;
+  const stops = q.stops ?? [];
+  const lastIdx = stops.length - 1;
+  const amount = parseAmount(value);
+  const idx = amount === null ? 0 : Math.max(0, stops.findIndex((s) => s.value === amount));
+
+  // Like the range slider, an untouched (or invalid) slider still counts as answered: default to the lowest stop.
+  useEffect(() => {
+    if (amount === null) {
+      onChange(String(stops[0].value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pct = lastIdx === 0 ? 0 : (idx / lastIdx) * 100;
+
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      {q.help && <p className="help">{q.help}</p>}
+      <p className="range-value">{stops[idx]?.label}</p>
+      <div className="range">
+        <div className="range-track" />
+        <div className="range-fill" style={{ left: 0, width: `${pct}%` }} />
+        <input
+          id={id}
+          type="range"
+          min={0}
+          max={lastIdx}
+          step={1}
+          value={idx}
+          aria-valuetext={stops[idx]?.label}
+          aria-invalid={invalid || undefined}
+          onChange={(e) => onChange(String(stops[Number(e.target.value)].value))}
+        />
+      </div>
+      <div className="scale-labels">
+        <span>{stops[0]?.label}</span>
+        <span>{stops[lastIdx]?.label}</span>
+      </div>
+    </div>
   );
 }
 

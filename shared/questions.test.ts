@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PAGE_TITLES, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionSteps, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PAGE_TITLES, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, askedAnswers, formatAmount, formatAmountInline, formatAnswer, formatRange, formatRangeInline, isAsked, missingRequired, parseAmount, parseRange, questionSteps, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
+import type { Answers } from './types';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
 
@@ -14,7 +15,7 @@ describe('questions', () => {
   it('defines the answer ids other modules rely on', () => {
     expect(ids(FOUNDER_QUESTIONS)).toEqual([
       'companyName', 'website', 'contactName', 'contactEmail',
-      'values', 'stage', 'raise', 'problemSolution',
+      'values', 'stage', 'raisedSoFar', 'raise', 'problemSolution',
       'growthMoM', 'revenue', 'customers', 'retention', 'runway',
       'team', 'involvement', 'whyInvest', 'pitchVideo',
       'pressure', 'transparency', 'leadership',
@@ -27,7 +28,7 @@ describe('questions', () => {
   });
 
   it('groups the founder basics questions and the metrics questions into one step each, and gives every other question its own step', () => {
-    const steps = questionSteps('founder');
+    const steps = questionSteps('founder', {});
     expect(steps).toHaveLength(13);
     expect(ids(steps[0])).toEqual(['companyName', 'website', 'contactName', 'contactEmail']);
     expect(ids(steps[1])).toEqual(['values']);
@@ -56,7 +57,7 @@ describe('questions', () => {
   });
 
   it('gives investors 11 steps of one question each', () => {
-    const steps = questionSteps('investor');
+    const steps = questionSteps('investor', {});
     expect(steps).toHaveLength(11);
     for (const step of steps) expect(step).toHaveLength(1);
     expect(ids(steps[0])).toEqual(['investorName']);
@@ -281,6 +282,114 @@ describe('questions', () => {
     expect(formatAnswer(pressure, '11')).toBe('');
     expect(formatAnswer(pressure, 'x')).toBe('');
     expect(formatAnswer(pressure, undefined)).toBe('');
+  });
+});
+
+describe('conditional questions', () => {
+  const raisedSoFar = FOUNDER_QUESTIONS.find((q) => q.id === 'raisedSoFar')!;
+  const missing = (answers: Answers) => ids(missingRequired('founder', answers));
+
+  it('asks how much the founder has raised as a required single amount on the ticket scale, between the stage and the raise', () => {
+    expect(raisedSoFar).toMatchObject({ label: 'How much have you raised so far?', kind: 'amount', required: true, stops: TICKET_STOPS });
+    expect(raisedSoFar.page).toBeUndefined();
+    const order = ids(FOUNDER_QUESTIONS);
+    expect(order.indexOf('raisedSoFar')).toBe(order.indexOf('stage') + 1);
+    expect(order.indexOf('raise')).toBe(order.indexOf('raisedSoFar') + 1);
+  });
+
+  it('asks the raised question only at seed, series A and series B+', () => {
+    for (const stage of ['seed', 'series-a', 'series-b-plus']) expect(isAsked(raisedSoFar, { stage })).toBe(true);
+    for (const stage of ['pre-seed', '', 'series-z']) expect(isAsked(raisedSoFar, { stage })).toBe(false);
+    expect(isAsked(raisedSoFar, {})).toBe(false);
+    expect(isAsked(raisedSoFar, { stage: ['seed'] })).toBe(false);
+  });
+
+  it('always asks a question without a condition', () => {
+    for (const q of [...FOUNDER_QUESTIONS, ...INVESTOR_QUESTIONS].filter((x) => !x.askWhen)) {
+      expect(isAsked(q, {})).toBe(true);
+    }
+  });
+
+  it('bases every condition on an earlier single-choice question and its option ids', () => {
+    for (const qs of [FOUNDER_QUESTIONS, INVESTOR_QUESTIONS]) {
+      qs.forEach((q, i) => {
+        if (!q.askWhen) return;
+        const source = qs.slice(0, i).find((x) => x.id === q.askWhen!.id);
+        expect(source?.kind).toBe('single');
+        const optionIds = source!.options!.map((o) => o.id);
+        for (const id of q.askWhen.in) expect(optionIds).toContain(id);
+      });
+    }
+  });
+
+  it('adds a step for the raised question right after the stage, only once the stage is seed or later', () => {
+    expect(questionSteps('founder', {})).toHaveLength(13);
+    expect(questionSteps('founder', { stage: 'pre-seed', raisedSoFar: '1000' })).toHaveLength(13);
+    expect(questionSteps('founder', { stage: 'pre-seed' }).flat().map((q) => q.id)).not.toContain('raisedSoFar');
+    for (const stage of ['seed', 'series-a', 'series-b-plus']) {
+      const steps = questionSteps('founder', { stage });
+      expect(steps).toHaveLength(14);
+      expect(ids(steps[2])).toEqual(['stage']);
+      expect(ids(steps[3])).toEqual(['raisedSoFar']);
+      expect(ids(steps[4])).toEqual(['raise']);
+    }
+  });
+
+  it('requires a valid amount when the raised question is asked, and never when it is hidden', () => {
+    expect(missing({ stage: 'seed' })).toContain('raisedSoFar');
+    expect(missing({ stage: 'seed', raisedSoFar: '' })).toContain('raisedSoFar');
+    expect(missing({ stage: 'seed', raisedSoFar: '1500' })).toContain('raisedSoFar');
+    expect(missing({ stage: 'seed', raisedSoFar: ['1000'] })).toContain('raisedSoFar');
+    expect(missing({ stage: 'seed', raisedSoFar: '0' })).not.toContain('raisedSoFar');
+    expect(missing({ stage: 'series-b-plus', raisedSoFar: '100000' })).not.toContain('raisedSoFar');
+    expect(missing({ stage: 'pre-seed' })).not.toContain('raisedSoFar');
+    expect(missing({})).not.toContain('raisedSoFar');
+  });
+
+  it('parseAmount accepts one ticket stop value as a string, and nothing else', () => {
+    expect(parseAmount('0')).toBe(0);
+    expect(parseAmount('1000')).toBe(1000);
+    expect(parseAmount('100000')).toBe(100000);
+    expect(parseAmount('1500')).toBeNull();
+    expect(parseAmount('')).toBeNull();
+    expect(parseAmount('  ')).toBeNull();
+    expect(parseAmount('abc')).toBeNull();
+    expect(parseAmount(['1000'])).toBeNull();
+    expect(parseAmount(undefined)).toBeNull();
+  });
+
+  it('formats an amount answer with its stop label, and blanks an invalid one', () => {
+    expect(formatAnswer(raisedSoFar, '1000')).toBe('€1M');
+    expect(formatAnswer(raisedSoFar, '0')).toBe('Under €100k');
+    expect(formatAnswer(raisedSoFar, '1500')).toBe('');
+    expect(formatAnswer(raisedSoFar, undefined)).toBe('');
+  });
+
+  it('askedAnswers drops the answers to hidden questions and keeps everything else', () => {
+    expect(askedAnswers('founder', { stage: 'pre-seed', raisedSoFar: '1000', raise: ['0', '500'] })).toEqual({ stage: 'pre-seed', raise: ['0', '500'] });
+    const seed: Answers = { stage: 'seed', raisedSoFar: '1000', raise: ['0', '500'] };
+    expect(askedAnswers('founder', seed)).toEqual(seed);
+    expect(askedAnswers('investor', { stages: ['seed'], raisedSoFar: '1000' })).toEqual({ stages: ['seed'], raisedSoFar: '1000' });
+  });
+});
+
+describe('formatRangeInline', () => {
+  it('lower-cases a range starting at "Under €100k", and formats every other range like formatRange', () => {
+    expect(formatRangeInline([0, 500])).toBe('under €100k – €500k');
+    expect(formatRangeInline([0, 0])).toBe('under €100k');
+    expect(formatRangeInline([50000, 100000])).toBe('€50M – €100M+');
+  });
+});
+
+describe('formatAmountInline', () => {
+  it('lower-cases the "Under €100k" stop so it reads naturally mid-sentence', () => {
+    expect(formatAmountInline(0)).toBe('under €100k');
+  });
+
+  it('formats every other amount like formatAmount', () => {
+    expect(formatAmountInline(100000)).toBe('€100M+');
+    expect(formatAmountInline(1000)).toBe('€1M');
+    expect(formatAmountInline(450)).toBe('€450k');
   });
 });
 

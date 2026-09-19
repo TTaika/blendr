@@ -44,6 +44,7 @@ export interface Company {
   values: string[]; // exactly three short company values, max 30 characters each
   stage: StageId;
   raise: [number, number]; // € thousands range on the TICKET_STOPS scale; 100000 means "€100M+"
+  raised?: number; // € thousands raised so far, on the same scale; only founders past pre-seed give it
   keywords: { id: string; reason: string }[];
   problem: string;
   solution: string;

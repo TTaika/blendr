@@ -16,6 +16,22 @@ describe('CompanyCard', () => {
     expect(screen.getByText('Seed · raising €2.5M')).toBeInTheDocument();
   });
 
+  it('shows the amount raised so far between the stage and the raise, only when the company has one', () => {
+    const { rerender } = render(<CompanyCard company={{ ...fixtureCompany, raised: 1000 }} />);
+    expect(screen.getByText('Seed · raised €1M · raising €2.5M')).toHaveClass('card-meta');
+    rerender(<CompanyCard company={fixtureCompany} />);
+    expect(screen.queryByText(/raised/)).not.toBeInTheDocument();
+  });
+
+  it('words the lowest and highest amounts to read naturally mid-sentence', () => {
+    const { rerender } = render(<CompanyCard company={{ ...fixtureCompany, raised: 0 }} />);
+    expect(screen.getByText('Seed · raised under €100k · raising €2.5M')).toBeInTheDocument();
+    rerender(<CompanyCard company={{ ...fixtureCompany, raised: 0, raise: [0, 500] }} />);
+    expect(screen.getByText('Seed · raised under €100k · raising under €100k – €500k')).toBeInTheDocument();
+    rerender(<CompanyCard company={{ ...fixtureCompany, stage: 'series-b-plus', raised: 100000, raise: [50000, 100000] }} />);
+    expect(screen.getByText('Series B+ · raised €100M+ · raising €50M – €100M+')).toBeInTheDocument();
+  });
+
   it('never shows a match percentage anywhere', () => {
     const { container } = render(<CompanyCard company={fixtureCompany} fit="strong" matched={['nordics', 'technical']} />);
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();

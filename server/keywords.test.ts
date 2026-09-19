@@ -10,6 +10,7 @@ const founderAnswers: Answers = {
   contactEmail: 'jamie@acme.example',
   values: ['craftsmanship', 'customer-obsession', 'sustainability'],
   stage: 'seed',
+  raisedSoFar: '1000',
   raise: ['2000', '5000'],
   problemSolution: 'Grids lack flexibility. We shift building loads.',
   revenue: '€500k ARR',
@@ -41,6 +42,7 @@ describe('buildPrompt', () => {
     expect(prompt).toContain('profiling a startup');
     for (const id of KEYWORD_IDS) expect(prompt).toContain(`- ${id} (`);
     expect(prompt).toContain('Q: Current funding stage\nA: Seed');
+    expect(prompt).toContain('Q: How much have you raised so far?\nA: €1M');
     expect(prompt).toContain('Q: How much are you raising?\nA: €2M – €5M');
     expect(prompt).toContain("Q: Choose your company's three main values\nA: Craftsmanship, Customer obsession, Sustainability");
     expect(prompt).toContain('Website text (truncated):\nWe are Acme Grid.');
@@ -65,6 +67,13 @@ describe('buildPrompt', () => {
     expect(prompt).not.toContain('Point of contact');
     expect(prompt).not.toContain('Contact email');
     expect(prompt).toContain('Acme Grid');
+  });
+
+  it('never sends a raised amount kept from before the founder switched to Pre-seed', () => {
+    const prompt = buildPrompt('founder', { ...founderAnswers, stage: 'pre-seed', raisedSoFar: '250' }, null);
+    expect(prompt).toContain('Q: Current funding stage\nA: Pre-seed');
+    expect(prompt).not.toContain('How much have you raised so far?');
+    expect(prompt).not.toContain('€250k');
   });
 
   it('never sends the founder pitch video answer to the AI', () => {

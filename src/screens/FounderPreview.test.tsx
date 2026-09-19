@@ -99,7 +99,10 @@ describe('FounderPreview: pitch video', () => {
     const media = stubVideoPlayback();
     const { container } = render(<FounderPreview profile={withVideo} onStartOver={vi.fn()} loadVideo={vi.fn(async () => clip)} />);
     await screen.findByRole('heading', { name: 'Pitch video' });
-    media.showVideo(container.querySelector('video')!, 0.5);
+    const video = container.querySelector('video')!;
+    // The observer is attached in an effect, which can land after the heading under a busy parallel run.
+    await waitFor(() => expect(media.watching(video)).toBe(1));
+    media.showVideo(video, 0.5);
     expect(media.play).toHaveBeenCalledTimes(1);
   });
 
