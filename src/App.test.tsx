@@ -146,8 +146,39 @@ describe('App', () => {
 
     render(<App />);
     expect(screen.getByRole('button', { name: 'Connect (1)' })).toBeInTheDocument();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: 'Reset demo' }));
+    expect(confirm).toHaveBeenCalledWith('Reset the demo? This clears your answers, profile and likes on this phone.');
     expect(screen.getByRole('button', { name: /Skip to swiping/ })).toBeInTheDocument();
     expect(saved()).toEqual(initialState);
+    confirm.mockRestore();
+  });
+
+  it('keeps everything when the reset is not confirmed', async () => {
+    const user = userEvent.setup();
+    render(<App random={() => 0} swipeExitMs={0} />);
+    await user.click(screen.getByRole('button', { name: /Skip to swiping/ }));
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    await screen.findByRole('button', { name: 'Connect (1)' });
+
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await user.click(screen.getByRole('button', { name: 'Reset demo' }));
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(screen.getByText('Random order · demo mode')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connect (1)' })).toBeInTheDocument();
+    expect(saved().likedIds).toHaveLength(1);
+    confirm.mockRestore();
+  });
+
+  it('skips saved company ids that no longer exist', () => {
+    preload({
+      screen: 'swipe',
+      mode: 'skip',
+      feed: [{ companyId: 'gone-co', matched: [] }, { companyId: 'northlight-grid', matched: [] }],
+      likedIds: ['gone-co'],
+    });
+    render(<App />);
+    expect(topCardName()).toBe('Northlight Grid');
+    expect(screen.getByRole('button', { name: 'Connect (0)' })).toBeInTheDocument();
   });
 });

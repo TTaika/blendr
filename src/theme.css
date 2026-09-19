@@ -192,11 +192,12 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .role-title { font-size: 1.1rem; font-weight: 600; }
 .reset {
   position: fixed;
-  left: 12px;
+  left: calc(12px + env(safe-area-inset-left));
   bottom: calc(10px + env(safe-area-inset-bottom));
-  background: none;
-  border: 0;
-  padding: 4px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
   color: var(--muted);
   font-size: 0.75rem;
   text-decoration: underline;

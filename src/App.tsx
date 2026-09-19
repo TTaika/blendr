@@ -82,10 +82,10 @@ export default function App({ generate = requestKeywords, random = Math.random, 
             : 'Random order · demo mode';
         return (
           <Swipe
-            entries={remainingFeed(state)}
+            entries={remainingFeed(state).filter((e) => COMPANY_BY_ID.has(e.companyId))}
             companies={COMPANY_BY_ID}
             subtitle={subtitle}
-            likedCount={state.likedIds.length}
+            likedCount={likedCompanies.length}
             showConnectPrompt={state.showConnectPrompt}
             onLike={(companyId) => dispatch({ type: 'like', companyId })}
             onDiscard={(companyId) => dispatch({ type: 'discard', companyId })}
@@ -106,7 +106,15 @@ export default function App({ generate = requestKeywords, random = Math.random, 
     <>
       {renderScreen()}
       {screen !== 'role' && (
-        <button type="button" className="reset" onClick={() => dispatch({ type: 'reset' })}>
+        <button
+          type="button"
+          className="reset"
+          onClick={() => {
+            if (window.confirm('Reset the demo? This clears your answers, profile and likes on this phone.')) {
+              dispatch({ type: 'reset' });
+            }
+          }}
+        >
           Reset demo
         </button>
       )}
