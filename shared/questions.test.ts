@@ -13,8 +13,8 @@ describe('questions', () => {
 
   it('defines the answer ids other modules rely on', () => {
     expect(ids(FOUNDER_QUESTIONS)).toEqual([
-      'companyName', 'values', 'stage', 'raise', 'problem',
-      'solution', 'traction', 'team', 'involvement', 'whyInvest',
+      'companyName', 'values', 'stage', 'raise', 'problemSolution',
+      'traction', 'team', 'involvement', 'whyInvest',
       'pressure', 'transparency', 'leadership',
     ]);
     expect(ids(INVESTOR_QUESTIONS)).toEqual([
@@ -22,6 +22,16 @@ describe('questions', () => {
       'regions', 'involvement', 'founderFit',
       'pressure', 'transparency', 'risk',
     ]);
+  });
+
+  it('combines the problem and solution questions into a single problemSolution question', () => {
+    const q = FOUNDER_QUESTIONS.find((x) => x.id === 'problemSolution')!;
+    expect(q.label).toBe('What is the problem and how do you solve it?');
+    expect(q.kind).toBe('longtext');
+    expect(q.required).toBe(true);
+    expect(q.maxLength).toBe(600);
+    expect(ids(FOUNDER_QUESTIONS)).not.toContain('problem');
+    expect(ids(FOUNDER_QUESTIONS)).not.toContain('solution');
   });
 
   it('makes the values question a multi-choice with at most 3 selections from 13 options', () => {

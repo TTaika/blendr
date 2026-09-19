@@ -76,7 +76,7 @@ export function CompanyCard({ company, matched = [], fit, showContact = false, a
       </header>
 
       <section className="card-details">
-        <Detail title="Problem" text={company.problem} />
+        <Detail title={company.solution.trim() ? 'Problem' : 'Problem & solution'} text={company.problem} />
         <Detail title="Solution" text={company.solution} />
         <Detail title="Team" text={company.team} />
         {company.keyNumbers.length > 0 && (

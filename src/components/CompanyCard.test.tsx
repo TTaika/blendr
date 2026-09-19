@@ -84,6 +84,17 @@ describe('CompanyCard', () => {
     expect(screen.getByText('€620k')).toBeInTheDocument();
   });
 
+  it('headings the problem detail "Problem & solution" when the solution is empty, and "Problem" when both are present', () => {
+    const { rerender } = render(<CompanyCard company={{ ...fixtureCompany, solution: '' }} />);
+    expect(screen.getByRole('heading', { name: 'Problem & solution' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Problem' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Solution' })).not.toBeInTheDocument();
+
+    rerender(<CompanyCard company={fixtureCompany} />);
+    expect(screen.getByRole('heading', { name: 'Problem' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Solution' })).toBeInTheDocument();
+  });
+
   it('shows contact details only when asked', () => {
     const { rerender } = render(<CompanyCard company={fixtureCompany} />);
     expect(screen.queryByText(fixtureCompany.contact.email)).not.toBeInTheDocument();
