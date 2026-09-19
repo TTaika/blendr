@@ -65,3 +65,29 @@ p { margin: 0; }
   border-radius: var(--radius);
   padding: 16px;
 }
+
+/* Keyword chips */
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); }
+.chip-matched { border-color: var(--accent); }
+.chip-open { background: var(--bg-deep); }
+.chip-label { background: none; border: 0; padding: 6px 12px; cursor: pointer; font-size: 0.9rem; }
+.chip-matched .chip-label { color: var(--accent); }
+.chip-remove { background: none; border: 0; padding: 6px 10px 6px 0; cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1; }
+.chip-reason { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--bg-deep); font-size: 0.9rem; color: var(--muted); }
+.chip-reason strong { color: var(--text); }
+
+/* Company card */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.card-head { display: flex; flex-direction: column; gap: 12px; }
+.card-oneliner { font-size: 1.1rem; }
+.card-meta { font-size: 0.9rem; }
+.card-more { font-size: 0.8rem; text-align: center; }
+.match { background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.card-details { display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
+.numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 0; }
+.numbers div { background: var(--bg-deep); border-radius: 12px; padding: 10px 12px; }
+.numbers dt { font-size: 0.75rem; color: var(--muted); }
+.numbers dd { margin: 2px 0 0; font-size: 1.1rem; font-weight: 600; }
+.card-video { width: 100%; border-radius: 12px; background: var(--bg-deep); }
+.contact p { margin-top: 4px; }
