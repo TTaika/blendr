@@ -30,7 +30,7 @@ const app = createApp({
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Blender server on port ${port} (model ${modelName}, API key ${apiKey ? 'set' : 'MISSING'})`);
+  console.log(`Blendr server on port ${port} (model ${modelName}, API key ${apiKey ? 'set' : 'MISSING'})`);
   if (model) {
     // Runs in the background so startup is not blocked; /api/health reports it too.
     void runSelfTest(model).then((result) => {

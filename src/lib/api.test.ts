@@ -28,7 +28,7 @@ describe('requestKeywords', () => {
   it('explains network failures', async () => {
     const fetchImpl = async () => { throw new TypeError('Failed to fetch'); };
     await expect(requestKeywords('investor', {}, fetchImpl as unknown as typeof fetch)).rejects.toThrow(
-      'Could not reach the Blender server. Check the Wi-Fi connection.',
+      'Could not reach the Blendr server. Check the Wi-Fi connection.',
     );
   });
 });

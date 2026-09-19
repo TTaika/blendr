@@ -1,4 +1,4 @@
-export const STORAGE_KEY = 'blender-demo-v1';
+export const STORAGE_KEY = 'blendr-v1';
 
 export function loadSaved(): unknown {
   try {
@@ -13,6 +13,6 @@ export function save(value: unknown): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch {
-    // Storage unavailable (private mode, quota): the demo keeps working in memory.
+    // Storage unavailable (private mode, quota): the app keeps working in memory.
   }
 }

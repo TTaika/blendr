@@ -117,7 +117,7 @@ async function fetchPublic(
     const res = await fetchImpl(url, {
       signal,
       redirect: 'manual',
-      headers: { 'user-agent': 'BlenderDemo/0.1 (+keyword suggestions)' },
+      headers: { 'user-agent': 'Blendr/0.1 (+keyword suggestions)' },
     });
     if (!REDIRECT_STATUSES.has(res.status)) return res;
     await res.body?.cancel();

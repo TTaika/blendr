@@ -39,6 +39,12 @@ export default function App({ generate = requestKeywords, random = Math.random, 
     });
   }
 
+  function startOver() {
+    if (window.confirm('Start over? This clears your answers, profile and likes on this phone.')) {
+      dispatch({ type: 'reset' });
+    }
+  }
+
   function submitProfile() {
     if (state.profile?.role === 'founder') dispatch({ type: 'submitFounderProfile' });
     else if (state.profile?.role === 'investor') {
@@ -73,13 +79,13 @@ export default function App({ generate = requestKeywords, random = Math.random, 
         );
       case 'founder-preview':
         if (!state.profile) break;
-        return <FounderPreview profile={state.profile} onStartOver={() => dispatch({ type: 'reset' })} />;
+        return <FounderPreview profile={state.profile} onStartOver={startOver} />;
       case 'swipe': {
         const fundName = state.profile?.answers.fundName;
         const subtitle =
           state.mode === 'investor' && typeof fundName === 'string' && fundName
             ? `Ranked for ${fundName}`
-            : 'Random order · demo mode';
+            : 'Random order';
         return (
           <Swipe
             entries={remainingFeed(state).filter((e) => COMPANY_BY_ID.has(e.companyId))}
@@ -105,17 +111,9 @@ export default function App({ generate = requestKeywords, random = Math.random, 
   return (
     <>
       {renderScreen()}
-      {screen !== 'role' && (
-        <button
-          type="button"
-          className="reset"
-          onClick={() => {
-            if (window.confirm('Reset the demo? This clears your answers, profile and likes on this phone.')) {
-              dispatch({ type: 'reset' });
-            }
-          }}
-        >
-          Reset demo
+      {screen !== 'role' && screen !== 'founder-preview' && (
+        <button type="button" className="reset" onClick={startOver}>
+          Start over
         </button>
       )}
     </>

@@ -33,7 +33,7 @@ const investorResult: KeywordResult = {
 };
 const founderAnswers: Answers = {
   companyName: 'Acme',
-  oneLiner: 'Payments for bakeries',
+  values: ['Payments trust', 'Baker-first support', 'Simple pricing'],
   stage: 'seed',
   raise: 't-500k-2m',
   problem: 'P',
@@ -54,7 +54,7 @@ describe('App', () => {
   it('starts on role select and opens the matching questionnaire', async () => {
     const user = userEvent.setup();
     render(<App />);
-    expect(screen.queryByRole('button', { name: 'Reset demo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Start over' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /I'm a founder/ }));
     expect(screen.getByRole('heading', { name: 'Tell us about your startup' })).toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App random={() => 0} swipeExitMs={0} />);
     await user.click(screen.getByRole('button', { name: /Skip to swiping/ }));
-    expect(screen.getByText('Random order · demo mode')).toBeInTheDocument();
+    expect(screen.getByText('Random order')).toBeInTheDocument();
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
 
     const order = randomFeed(COMPANIES, () => 0).map((e) => COMPANY_BY_ID.get(e.companyId)!.name);
@@ -116,8 +116,25 @@ describe('App', () => {
     expect(screen.getByRole('article', { name: 'Acme' })).toBeInTheDocument();
     expect(saved().feed).toEqual([]);
 
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: 'Start over' }));
+    expect(confirm).toHaveBeenCalledWith('Start over? This clears your answers, profile and likes on this phone.');
     expect(screen.getByRole('button', { name: /I'm a founder/ })).toBeInTheDocument();
+    confirm.mockRestore();
+  });
+
+  it('shows only one Start over button on the founder preview screen', async () => {
+    const user = userEvent.setup();
+    preload({ screen: 'screening', mode: 'founder', answers: founderAnswers });
+    const generate = vi.fn(async (): Promise<KeywordResult> => ({
+      summary: 'Payments for bakeries',
+      keywords: [{ id: 'fintech', reason: 'Payments.' }],
+      websiteUsed: false,
+    }));
+    render(<App generate={generate} />);
+    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    await user.click(await screen.findByRole('button', { name: 'Submit profile' }));
+    expect(screen.getAllByRole('button', { name: 'Start over' })).toHaveLength(1);
   });
 
   it('lets the user add keywords manually when Gemini fails', async () => {
@@ -147,8 +164,8 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByRole('button', { name: 'Connect (1)' })).toBeInTheDocument();
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    await user.click(screen.getByRole('button', { name: 'Reset demo' }));
-    expect(confirm).toHaveBeenCalledWith('Reset the demo? This clears your answers, profile and likes on this phone.');
+    await user.click(screen.getByRole('button', { name: 'Start over' }));
+    expect(confirm).toHaveBeenCalledWith('Start over? This clears your answers, profile and likes on this phone.');
     expect(screen.getByRole('button', { name: /Skip to swiping/ })).toBeInTheDocument();
     expect(saved()).toEqual(initialState);
     confirm.mockRestore();
@@ -162,9 +179,9 @@ describe('App', () => {
     await screen.findByRole('button', { name: 'Connect (1)' });
 
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    await user.click(screen.getByRole('button', { name: 'Reset demo' }));
+    await user.click(screen.getByRole('button', { name: 'Start over' }));
     expect(confirm).toHaveBeenCalledOnce();
-    expect(screen.getByText('Random order · demo mode')).toBeInTheDocument();
+    expect(screen.getByText('Random order')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect (1)' })).toBeInTheDocument();
     expect(saved().likedIds).toHaveLength(1);
     confirm.mockRestore();

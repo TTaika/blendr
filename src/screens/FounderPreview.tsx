@@ -16,7 +16,6 @@ export function FounderPreview({ profile, onStartOver }: FounderPreviewProps) {
         <p className="muted">This is how investors will see your card. Tap a keyword to see why it was chosen.</p>
       </header>
       <CompanyCard company={companyFromFounderProfile(profile)} allKeywords />
-      <p className="panel muted">Demo note: profiles created here are not added to the investor swipe feed.</p>
       <button type="button" className="btn btn-ghost" onClick={onStartOver}>
         Start over
       </button>

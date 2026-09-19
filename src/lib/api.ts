@@ -11,7 +11,7 @@ export async function requestKeywords(role: Role, answers: Answers, fetchImpl: t
       body: JSON.stringify({ role, answers }),
     });
   } catch {
-    throw new Error('Could not reach the Blender server. Check the Wi-Fi connection.');
+    throw new Error('Could not reach the Blendr server. Check the Wi-Fi connection.');
   }
   const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
   if (!res.ok) {

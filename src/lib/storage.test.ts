@@ -5,7 +5,7 @@ import { STORAGE_KEY, loadSaved, save } from './storage';
 afterEach(() => vi.restoreAllMocks());
 
 describe('storage', () => {
-  it('round-trips a value under the demo key', () => {
+  it('round-trips a value under the storage key', () => {
     save({ a: 1 });
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('{"a":1}');
     expect(loadSaved()).toEqual({ a: 1 });
