@@ -88,7 +88,7 @@ describe('App', () => {
     };
     const top = rankFeed(criteriaFromProfile(profile), COMPANIES)[0];
     expect(topCardName()).toBe(COMPANY_BY_ID.get(top.companyId)!.name);
-    expect(screen.getByText(`${top.score}% match`)).toBeInTheDocument();
+    expect(within(screen.getAllByRole('article')[0]).getByText(`${top.score}% match`)).toBeInTheDocument();
   });
 
   it('skip: random feed, prompt after 5 likes, Connect lists the likes', async () => {
