@@ -56,6 +56,25 @@ describe('POST /api/keywords rate limit', () => {
     now += 60_000;
     expect((await post()).status).toBe(200);
   });
+
+  it('behind a trusted proxy (Render), limits each visitor separately', async () => {
+    const app = createApp({ model: okModel, fetchWebsite: noWebsite, trustProxy: 1, now: () => 1_000_000 });
+    const postFrom = (ip: string) =>
+      request(app).post('/api/keywords').set('X-Forwarded-For', ip).send({ role: 'founder', answers: {} });
+
+    for (let i = 0; i < 20; i++) expect((await postFrom('203.0.113.1')).status).toBe(200);
+    expect((await postFrom('203.0.113.1')).status).toBe(429);
+    expect((await postFrom('203.0.113.2')).status).toBe(200);
+  });
+
+  it('without a trusted proxy, ignores X-Forwarded-For so it cannot be spoofed', async () => {
+    const app = createApp({ model: okModel, fetchWebsite: noWebsite, now: () => 1_000_000 });
+    const postFrom = (ip: string) =>
+      request(app).post('/api/keywords').set('X-Forwarded-For', ip).send({ role: 'founder', answers: {} });
+
+    for (let i = 0; i < 20; i++) expect((await postFrom(`198.51.100.${i}`)).status).toBe(200);
+    expect((await postFrom('198.51.100.99')).status).toBe(429);
+  });
 });
 
 describe('GET /api/health', () => {

@@ -27,6 +27,17 @@ With a key set, the server also makes one test request to Gemini right after sta
 - Phones can't connect and the firewall is on? `sudo ufw allow 3000/tcp`
 - Guest/venue Wi-Fi often isolates devices from each other. Use your own router or a phone hotspot instead.
 
+## Deploy on Render (public URL, no laptop)
+
+`render.yaml` is a Render Blueprint for one free web service (API + built app).
+
+1. Sign in at [render.com](https://render.com) with GitHub and allow access to this repo.
+2. **New → Blueprint**, pick this repo and the `feature/blendr` branch.
+3. Paste your `GEMINI_API_KEY` when asked (kept server-side on Render).
+4. Open `https://<service>.onrender.com`. `/api/health` should show `"selfTest":{"status":"ok"}`.
+
+Free services sleep after ~15 idle minutes; the first visit afterwards takes about a minute. Open the link a minute before a demo. `TRUST_PROXY=1` (set by the blueprint) makes the 20-requests-per-minute limit apply per visitor behind Render's proxy; leave it unset when hosting directly.
+
 ## Demo modes
 
 - **I'm a founder**: questionnaire → AI keywords (editable) → preview of the card investors would see
@@ -48,6 +59,7 @@ Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for
 |---|---|---|
 | `GEMINI_API_KEY` | (none) | Required for keyword generation |
 | `GEMINI_MODEL` | `gemini-flash-latest` | Any current Gemini model id |
+| `TRUST_PROXY` | unset | Proxy hops to trust for client IPs (`1` on Render) |
 | `PORT` | 3000 (start) / 3001 (dev) | Server port |
 
 ## Out of scope (team decisions)

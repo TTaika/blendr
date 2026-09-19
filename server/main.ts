@@ -27,6 +27,8 @@ const app = createApp({
   fetchWebsite: createWebsiteFetcher(),
   staticDir: production ? path.join(rootDir, 'dist') : undefined,
   getSelfTest: () => selfTest,
+  // TRUST_PROXY=1 on Render: rate-limit each visitor by their real IP, not the proxy's.
+  trustProxy: Number(process.env.TRUST_PROXY) || undefined,
 });
 
 app.listen(port, '0.0.0.0', () => {

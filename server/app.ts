@@ -12,6 +12,9 @@ export interface AppDeps {
   staticDir?: string; // built SPA (dist/) in production
   getSelfTest?: () => SelfTest; // startup Gemini check, reported by /api/health
   now?: () => number; // clock for the rate limiter (tests)
+  /** Proxy hops to trust for the client IP (X-Forwarded-For). Set only behind a real proxy such as
+   * Render; left unset when hosted directly, where a client could fake the header. */
+  trustProxy?: number;
 }
 
 const RATE_LIMIT = 20;
@@ -45,6 +48,7 @@ function isAnswers(value: unknown): value is Answers {
 
 export function createApp(deps: AppDeps) {
   const app = express();
+  if (deps.trustProxy) app.set('trust proxy', deps.trustProxy);
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (_req, res) => {

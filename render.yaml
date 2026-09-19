@@ -1,0 +1,23 @@
+# Render Blueprint: Blendr (Express API + built React app) as one free web service.
+# Render dashboard → New → Blueprint → pick this repo and the feature/blendr branch,
+# then paste GEMINI_API_KEY when asked. It stays a server-side secret on Render.
+services:
+  - type: web
+    name: blendr
+    runtime: node
+    plan: free
+    branch: feature/blendr
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      # Render sits behind a proxy: trust one hop so the rate limit is per visitor.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: NODE_VERSION
+        value: "22"
