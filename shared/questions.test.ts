@@ -13,17 +13,17 @@ describe('questions', () => {
 
   it('defines the answer ids other modules rely on', () => {
     expect(ids(FOUNDER_QUESTIONS)).toEqual([
-      'companyName', 'website', 'oneLiner', 'stage', 'raise', 'problem',
+      'companyName', 'values', 'stage', 'raise', 'problem',
       'solution', 'traction', 'team', 'involvement', 'whyInvest', 'workStyle',
     ]);
     expect(ids(INVESTOR_QUESTIONS)).toEqual([
-      'investorName', 'fundName', 'website', 'stages', 'tickets', 'thesis',
+      'investorName', 'fundName', 'stages', 'tickets', 'thesis',
       'regions', 'involvement', 'founderFit', 'workStyle',
     ]);
   });
 
-  it('limits the founder one-liner to 100 characters', () => {
-    expect(FOUNDER_QUESTIONS.find((q) => q.id === 'oneLiner')?.maxLength).toBe(100);
+  it('limits each company value to 30 characters', () => {
+    expect(FOUNDER_QUESTIONS.find((q) => q.id === 'values')?.maxLength).toBe(30);
   });
 
   it('gives every choice question options, and involvement options are taxonomy keywords', () => {
@@ -58,5 +58,17 @@ describe('questions', () => {
     expect(formatAnswer(stages, ['seed', 'series-a'])).toBe('Seed, Series A');
     expect(formatAnswer(team, '  Two founders ')).toBe('Two founders');
     expect(formatAnswer(team, undefined)).toBe('');
+  });
+
+  it('formats a values answer by trimming entries and joining with a comma', () => {
+    const values = FOUNDER_QUESTIONS.find((q) => q.id === 'values')!;
+    expect(formatAnswer(values, [' A ', 'B', 'C'])).toBe('A, B, C');
+    expect(formatAnswer(values, [' A ', '', 'C'])).toBe('A, C');
+  });
+
+  it('flags a required values question as missing unless it has exactly 3 non-empty trimmed entries', () => {
+    expect(missingRequired('founder', { values: ['A', '', 'C'] }).map((q) => q.id)).toContain('values');
+    expect(missingRequired('founder', { values: ['A', 'B'] }).map((q) => q.id)).toContain('values');
+    expect(missingRequired('founder', { values: ['A', 'B', 'C'] }).map((q) => q.id)).not.toContain('values');
   });
 });

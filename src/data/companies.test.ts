@@ -10,7 +10,12 @@ describe('test companies', () => {
   });
 
   it.each(COMPANIES.map((c) => [c.id, c] as const))('%s is well-formed', (_id, c) => {
-    expect(c.oneLiner.length).toBeLessThanOrEqual(100);
+    expect(c.values).toHaveLength(3);
+    for (const v of c.values) {
+      expect(v.trim()).toBe(v);
+      expect(v).not.toBe('');
+      expect(v.length).toBeLessThanOrEqual(30);
+    }
     expect(isStageId(c.stage)).toBe(true);
     expect(isTicketId(c.raise)).toBe(true);
     const keywordIds = c.keywords.map((k) => k.id);

@@ -1,7 +1,7 @@
 import { STAGES, TICKETS } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi';
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'values';
 
 export interface QuestionOption {
   id: string;
@@ -28,8 +28,7 @@ const INVOLVEMENT_OPTIONS: QuestionOption[] = [
 
 export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60 },
-  { id: 'website', label: 'Company website', help: 'Optional. We read it to suggest keywords.', kind: 'url', required: false, maxLength: 200 },
-  { id: 'oneLiner', label: 'What does your company do?', help: 'Max 100 characters. Shown first on your card.', kind: 'text', required: true, maxLength: 100 },
+  { id: 'values', label: "List your company's three main values", help: 'Up to 30 characters each.', kind: 'values', required: true, maxLength: 30 },
   { id: 'stage', label: 'Current funding stage', kind: 'single', required: true, options: [...STAGES] },
   { id: 'raise', label: 'How much are you raising?', kind: 'single', required: true, options: [...TICKETS] },
   { id: 'problem', label: 'What problem are you solving?', kind: 'longtext', required: true, maxLength: 400 },
@@ -44,7 +43,6 @@ export const FOUNDER_QUESTIONS: Question[] = [
 export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'investorName', label: 'Your name', kind: 'text', required: true, maxLength: 60 },
   { id: 'fundName', label: 'Fund or firm', kind: 'text', required: true, maxLength: 60 },
-  { id: 'website', label: 'Fund website', help: 'Optional. We read it to suggest keywords.', kind: 'url', required: false, maxLength: 200 },
   { id: 'stages', label: 'Which stages do you invest in?', kind: 'multi', required: true, options: [...STAGES] },
   { id: 'tickets', label: 'What ticket sizes can you provide?', kind: 'multi', required: true, options: [...TICKETS] },
   { id: 'thesis', label: 'Describe your investment thesis', help: 'Sectors, business models, what excites you', kind: 'longtext', required: true, maxLength: 400 },
@@ -63,13 +61,25 @@ function isEmpty(value: AnswerValue | undefined): boolean {
   return Array.isArray(value) ? value.length === 0 : value.trim() === '';
 }
 
+/** A values answer is complete only once it has exactly 3 entries, all non-empty after trimming. */
+function isValuesComplete(value: AnswerValue | undefined): boolean {
+  return Array.isArray(value) && value.length === 3 && value.every((v) => v.trim() !== '');
+}
+
 export function missingRequired(role: Role, answers: Answers): Question[] {
-  return questionsFor(role).filter((q) => q.required && isEmpty(answers[q.id]));
+  return questionsFor(role).filter((q) => {
+    if (!q.required) return false;
+    const value = answers[q.id];
+    return q.kind === 'values' ? !isValuesComplete(value) : isEmpty(value);
+  });
 }
 
 export function formatAnswer(question: Question, value: AnswerValue | undefined): string {
   if (value === undefined) return '';
   const label = (id: string) => question.options?.find((o) => o.id === id)?.label ?? id;
-  if (Array.isArray(value)) return value.map(label).join(', ');
+  if (Array.isArray(value)) {
+    if (question.options) return value.map(label).join(', ');
+    return value.map((v) => v.trim()).filter((v) => v !== '').join(', ');
+  }
   return question.options ? label(value) : value.trim();
 }

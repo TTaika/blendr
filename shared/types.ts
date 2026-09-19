@@ -41,7 +41,7 @@ export interface Contact {
 export interface Company {
   id: string;
   name: string;
-  oneLiner: string; // max 100 characters
+  values: string[]; // exactly three short company values, max 30 characters each
   stage: StageId;
   raise: TicketId;
   keywords: { id: string; reason: string }[];

@@ -6,7 +6,7 @@ import { criteriaFromProfile, randomFeed, rankFeed, scoreCompany, topKeywords, t
 const company = (overrides: Partial<Company> = {}): Company => ({
   id: 'acme',
   name: 'Acme',
-  oneLiner: 'Acme does things.',
+  values: ['Customer trust', 'Fast execution', 'Simple pricing'],
   stage: 'seed',
   raise: 't-2m-5m',
   keywords: [

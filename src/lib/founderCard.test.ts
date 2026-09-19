@@ -6,7 +6,7 @@ const profile: Profile = {
   role: 'founder',
   answers: {
     companyName: ' Acme ',
-    oneLiner: 'x'.repeat(120),
+    values: [' A ', 'B', '', 'C', 'D'],
     stage: 'series-a',
     raise: 't-5m-15m',
     problem: 'P',
@@ -14,7 +14,6 @@ const profile: Profile = {
     traction: '€1M ARR',
     team: 'Team',
     whyInvest: 'W',
-    website: 'acme.example',
   },
   summary: 'Acme does X',
   keywords: [{ id: 'fintech', reason: 'Payments', source: 'ai' }],
@@ -32,11 +31,12 @@ describe('companyFromFounderProfile', () => {
       solution: 'S',
       team: 'Team',
       whyInvest: 'W',
-      website: 'acme.example',
+      website: '',
       keywords: [{ id: 'fintech', reason: 'Payments' }],
       keyNumbers: [{ label: 'Traction', value: '€1M ARR' }],
     });
-    expect(c.oneLiner).toHaveLength(100);
+    // trims each entry, drops empties, and keeps only the first 3
+    expect(c.values).toEqual(['A', 'B', 'C']);
   });
 
   it('uses safe fallbacks for missing answers', () => {
@@ -45,5 +45,6 @@ describe('companyFromFounderProfile', () => {
     expect(c.stage).toBe('pre-seed');
     expect(c.raise).toBe('t-under-500k');
     expect(c.keyNumbers).toEqual([]);
+    expect(c.values).toEqual([]);
   });
 });

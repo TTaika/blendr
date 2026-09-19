@@ -87,6 +87,33 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
   const id = `q-${q.id}`;
   const label = q.required ? q.label : `${q.label} (optional)`;
 
+  if (q.kind === 'values') {
+    const existing = Array.isArray(value) ? value : [];
+    const vals = [0, 1, 2].map((i) => existing[i] ?? '');
+    return (
+      <fieldset className="field" aria-invalid={invalid || undefined}>
+        <legend>{label}</legend>
+        {q.help && <p className="help">{q.help}</p>}
+        {vals.map((v, i) => (
+          <label key={i} className="value-input">
+            {`Value ${i + 1}`}
+            <input
+              type="text"
+              maxLength={q.maxLength}
+              value={v}
+              aria-invalid={invalid || undefined}
+              onChange={(e) => {
+                const next = [...vals];
+                next[i] = e.target.value;
+                onChange(next);
+              }}
+            />
+          </label>
+        ))}
+      </fieldset>
+    );
+  }
+
   if (q.kind === 'single' || q.kind === 'multi') {
     const selected = Array.isArray(value) ? value : value ? [value] : [];
     return (

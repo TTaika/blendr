@@ -7,10 +7,12 @@ const text = (value: AnswerValue | undefined) => (typeof value === 'string' ? va
 export function companyFromFounderProfile(profile: Profile): Company {
   const a = profile.answers;
   const traction = text(a.traction);
+  const rawValues = Array.isArray(a.values) ? a.values : [];
+  const values = rawValues.map((v) => v.trim()).filter((v) => v !== '').slice(0, 3);
   return {
     id: 'founder-preview',
     name: text(a.companyName) || 'Your company',
-    oneLiner: text(a.oneLiner).slice(0, 100),
+    values,
     stage: isStageId(a.stage) ? a.stage : 'pre-seed',
     raise: isTicketId(a.raise) ? a.raise : 't-under-500k',
     keywords: profile.keywords.map(({ id, reason }) => ({ id, reason })),
@@ -19,7 +21,7 @@ export function companyFromFounderProfile(profile: Profile): Company {
     team: text(a.team),
     keyNumbers: traction ? [{ label: 'Traction', value: traction }] : [],
     whyInvest: text(a.whyInvest),
-    website: text(a.website),
+    website: '',
     contact: { name: '', title: '', email: '' },
   };
 }

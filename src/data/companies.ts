@@ -1,13 +1,13 @@
 import type { Company } from '../../shared/types';
 
-// Draft demo data. Replace with the real test companies when they are provided;
+// Draft data. Replace with the real test companies when they are provided;
 // companies.test.ts validates the format. To add a pitch video, put the file in
 // public/videos/ and set videoUrl: '/videos/<file>.mp4'.
 export const COMPANIES: Company[] = [
   {
     id: 'northlight-grid',
     name: 'Northlight Grid',
-    oneLiner: 'Software that lets building owners sell flexible power back to the grid.',
+    values: ['Grid reliability', 'Engineering rigor', 'Customer trust'],
     stage: 'seed',
     raise: 't-2m-5m',
     keywords: [
@@ -33,7 +33,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'kide-health',
     name: 'Kide Health',
-    oneLiner: 'AI triage that tells primary-care nurses which patients to see first.',
+    values: ['Clinical accuracy', 'Nurse empowerment', 'Patient safety'],
     stage: 'series-a',
     raise: 't-5m-15m',
     keywords: [
@@ -59,7 +59,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'ledgerleaf',
     name: 'Ledgerleaf',
-    oneLiner: 'Bookkeeping that runs itself for European small businesses.',
+    values: ['Automation first', 'Small business trust', 'European compliance'],
     stage: 'seed',
     raise: 't-500k-2m',
     keywords: [
@@ -85,7 +85,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'frostbyte-robotics',
     name: 'Frostbyte Robotics',
-    oneLiner: "Autonomous robots that inspect cold-storage warehouses so people don't have to.",
+    values: ['Operational safety', 'Reliability at scale', 'Field-tested hardware'],
     stage: 'series-a',
     raise: 't-5m-15m',
     keywords: [
@@ -111,7 +111,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'loop-pantry',
     name: 'Loop Pantry',
-    oneLiner: 'Marketplace selling surplus bakery and café food at closing time.',
+    values: ['Zero food waste', 'Community trust', 'Everyday affordability'],
     stage: 'pre-seed',
     raise: 't-under-500k',
     keywords: [
@@ -137,7 +137,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'quietmind',
     name: 'Quietmind',
-    oneLiner: 'Sleep coaching app built with clinical psychologists.',
+    values: ['Clinical rigor', 'Compassionate care', 'Evidence-based design'],
     stage: 'seed',
     raise: 't-500k-2m',
     keywords: [
@@ -163,7 +163,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'shieldpath',
     name: 'Shieldpath',
-    oneLiner: 'AI phishing simulations that train employees on the attacks they actually receive.',
+    values: ['Security awareness', 'Real-world realism', 'Continuous improvement'],
     stage: 'series-a',
     raise: 't-5m-15m',
     keywords: [
@@ -189,7 +189,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'tundra-games',
     name: 'Tundra Games',
-    oneLiner: 'Cozy multiplayer mobile games you play together in 5-minute sessions.',
+    values: ['Playful design', 'Social connection', 'Inclusive fun'],
     stage: 'seed',
     raise: 't-2m-5m',
     keywords: [
@@ -215,7 +215,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'birchbase',
     name: 'Birchbase',
-    oneLiner: 'Maintenance management for housing cooperatives, from repair tickets to budgets.',
+    values: ['Operational simplicity', 'Transparency', 'Long-term reliability'],
     stage: 'pre-seed',
     raise: 't-under-500k',
     keywords: [
@@ -241,7 +241,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'mycora',
     name: 'Mycora',
-    oneLiner: 'Fungal protein ingredients that make plant-based food taste like meat.',
+    values: ['Scientific rigor', 'Sustainable production', 'Great taste'],
     stage: 'series-b-plus',
     raise: 't-15m-plus',
     keywords: [
@@ -267,7 +267,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'routeflow',
     name: 'Routeflow',
-    oneLiner: 'Charging schedules for electric delivery fleets that cut energy costs.',
+    values: ['Energy efficiency', 'Fleet reliability', 'Cost savings'],
     stage: 'seed',
     raise: 't-2m-5m',
     keywords: [
@@ -293,7 +293,7 @@ export const COMPANIES: Company[] = [
   {
     id: 'learnloop',
     name: 'Learnloop',
-    oneLiner: 'AI tutor that helps apprentices pass their vocational exams.',
+    values: ['Learner success', 'Accessible tutoring', 'Trade expertise'],
     stage: 'pre-seed',
     raise: 't-500k-2m',
     keywords: [

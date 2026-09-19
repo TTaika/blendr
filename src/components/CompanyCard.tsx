@@ -33,7 +33,7 @@ export function CompanyCard({ company, score, matched = [], showContact = false,
           <span className="spacer" />
           {score !== undefined && <span className="match">{score}% match</span>}
         </div>
-        <p className="card-oneliner">{company.oneLiner}</p>
+        <p className="card-values">{company.values.join(' · ')}</p>
         <p className="card-meta muted">
           {stageLabel(company.stage)} · raising {ticketLabel(company.raise)}
         </p>

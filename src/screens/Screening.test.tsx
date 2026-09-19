@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Answers, KeywordResult } from '../../shared/types';
@@ -7,7 +7,7 @@ import { Screening } from './Screening';
 
 const founderAnswers: Answers = {
   companyName: 'Acme',
-  oneLiner: 'We do X',
+  values: ['Payments trust', 'Baker-first support', 'Simple pricing'],
   stage: 'seed',
   raise: 't-2m-5m',
   problem: 'P',
@@ -31,8 +31,36 @@ describe('Screening', () => {
     setup({ role: 'investor' });
     expect(screen.getByRole('heading', { name: 'Tell us about your investing' })).toBeInTheDocument();
     expect(screen.getByLabelText('Fund or firm')).toBeInTheDocument();
-    expect(screen.getByLabelText('Fund website (optional)')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Which stages do you invest in?' })).toBeInTheDocument();
+  });
+
+  it('has no website field for founders either', () => {
+    setup({ role: 'founder' });
+    expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
+  });
+
+  it('renders the values fieldset with three labelled inputs', () => {
+    setup({ role: 'founder' });
+    const group = screen.getByRole('group', { name: "List your company's three main values" });
+    expect(within(group).getByLabelText('Value 1')).toBeInTheDocument();
+    expect(within(group).getByLabelText('Value 2')).toBeInTheDocument();
+    expect(within(group).getByLabelText('Value 3')).toBeInTheDocument();
+  });
+
+  it('reports a 3-element array when typing into a values input', async () => {
+    const { user, onAnswer } = setup({ role: 'founder' });
+    await user.type(screen.getByLabelText('Value 2'), 'X');
+    expect(onAnswer).toHaveBeenLastCalledWith('values', ['', 'X', '']);
+  });
+
+  it('lists the values question in the alert when it is incomplete', async () => {
+    const { user } = setup({
+      role: 'founder',
+      answers: { ...founderAnswers, values: ['A', '', 'C'] },
+    });
+    await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
+    expect(screen.getByRole('alert')).toHaveTextContent("List your company's three main values");
   });
 
   it('reports text, single-choice and multi-choice answers', async () => {
@@ -54,7 +82,7 @@ describe('Screening', () => {
   it('lists unanswered required questions instead of calling the API', async () => {
     const { user, generate } = setup({ answers: { companyName: 'Acme' } });
     await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Please answer: What does your company do?');
+    expect(screen.getByRole('alert')).toHaveTextContent("Please answer: List your company's three main values");
     expect(generate).not.toHaveBeenCalled();
   });
 

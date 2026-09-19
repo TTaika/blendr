@@ -9,10 +9,10 @@ const chipLabels = (container: HTMLElement) =>
   [...container.querySelectorAll('.chip-label')].map((el) => el.textContent);
 
 describe('CompanyCard', () => {
-  it('shows name, one-liner, stage, raise and match score', () => {
+  it('shows name, values, stage, raise and match score', () => {
     render(<CompanyCard company={northlight} score={80} matched={['nordics']} />);
     expect(screen.getByRole('article', { name: 'Northlight Grid' })).toBeInTheDocument();
-    expect(screen.getByText(northlight.oneLiner)).toBeInTheDocument();
+    expect(screen.getByText(northlight.values.join(' · '))).toBeInTheDocument();
     expect(screen.getByText('Seed · raising €2M – €5M')).toBeInTheDocument();
     expect(screen.getByText('80% match')).toBeInTheDocument();
   });

@@ -80,7 +80,7 @@ p { margin: 0; }
 /* Company card */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .card-head { display: flex; flex-direction: column; gap: 12px; }
-.card-oneliner { font-size: 1.1rem; }
+.card-values { font-size: 1.1rem; }
 .card-meta { font-size: 0.9rem; }
 .card-more { font-size: 0.8rem; text-align: center; }
 .match { background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
@@ -173,7 +173,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .dialog { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
 
 /* Role select + reset */
-.screen { padding-bottom: calc(48px + env(safe-area-inset-bottom)); } /* room for the Reset demo link */
+.screen { padding-bottom: calc(48px + env(safe-area-inset-bottom)); } /* room for the Start over link */
 .role-select { justify-content: center; gap: 32px; }
 .role-select h1 { font-size: 2.4rem; }
 .role-options { display: flex; flex-direction: column; gap: 12px; }
