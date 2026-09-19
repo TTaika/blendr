@@ -52,7 +52,7 @@ export interface Company {
   whyInvest: string;
   website: string;
   contact: Contact;
-  videoUrl?: string; // e.g. '/videos/quantumcore.mp4' served from public/videos
+  videoUrl?: string; // pitch video: public/videos/pitch.mp4 for the test companies, a blob: URL for a founder's own
 }
 
 /** One card in the swipe feed. `score` is undefined in random ("skip") mode. */

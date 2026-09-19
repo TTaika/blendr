@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PAGE_TITLES, missingRequired, parseRange, questionSteps, type Question } from '../../shared/questions';
 import type { AnswerValue, Answers, KeywordResult, Role } from '../../shared/types';
 import { requestKeywords, type RequestKeywords } from '../lib/api';
+import { checkPitchVideo, readVideoDuration as readDurationInBrowser, type ReadVideoDuration } from '../lib/pitchVideo';
+import { clearPitchVideo, loadPitchVideo, savePitchVideo } from '../lib/videoStore';
 
 export interface ScreeningProps {
   role: Role;
@@ -10,6 +12,8 @@ export interface ScreeningProps {
   onGenerated: (result: KeywordResult) => void;
   onManual: () => void;
   generate?: RequestKeywords;
+  /** Reads a picked video's length. jsdom can't load media, so tests pass a fake. */
+  readVideoDuration?: ReadVideoDuration;
 }
 
 type Status = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error'; message: string };
@@ -25,7 +29,15 @@ function alertFor(stepQuestions: Question[], missing: Question[], answers: Answe
   return stepQuestions.length === 1 ? 'Please answer this question to continue.' : 'Please fill in the required fields.';
 }
 
-export function Screening({ role, answers, onAnswer, onGenerated, onManual, generate = requestKeywords }: ScreeningProps) {
+export function Screening({
+  role,
+  answers,
+  onAnswer,
+  onGenerated,
+  onManual,
+  generate = requestKeywords,
+  readVideoDuration = readDurationInBrowser,
+}: ScreeningProps) {
   const steps = questionSteps(role);
   const total = steps.length;
   const [step, setStep] = useState(0);
@@ -121,9 +133,13 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
             {stepPage === 'metrics' && <p className="help">Fill in what applies. Leave the rest empty.</p>}
           </>
         )}
-        {stepQuestions.map((q) => (
-          <Field key={q.id} question={q} value={answers[q.id]} invalid={invalidIds.has(q.id)} onChange={(v) => onAnswer(q.id, v)} />
-        ))}
+        {stepQuestions.map((q) =>
+          q.kind === 'video' ? (
+            <VideoField key={q.id} question={q} value={answers[q.id]} readDuration={readVideoDuration} onChange={(v) => onAnswer(q.id, v)} />
+          ) : (
+            <Field key={q.id} question={q} value={answers[q.id]} invalid={invalidIds.has(q.id)} onChange={(v) => onAnswer(q.id, v)} />
+          ),
+        )}
         {alertMessage && (
           <p className="error" role="alert">
             {alertMessage}
@@ -336,6 +352,117 @@ function RangeField({ question: q, value, invalid, onChange }: FieldProps) {
           onChange={(e) => report(minIdx, Math.max(Number(e.target.value), minIdx))}
         />
       </div>
+    </fieldset>
+  );
+}
+
+interface VideoFieldProps {
+  question: Question;
+  value: AnswerValue | undefined;
+  readDuration: ReadVideoDuration;
+  onChange: (value: AnswerValue) => void;
+}
+
+// The answer is a short descriptor ("pitch.mov · 0:48"); the video itself is kept on the phone by
+// videoStore. An empty answer means no video, whatever the store still holds.
+function VideoField({ question: q, value, readDuration, onChange }: VideoFieldProps) {
+  const descriptor = typeof value === 'string' ? value.trim() : '';
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(descriptor !== '');
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Bumped by every pick, Remove and unmount, so a slow check can't land after them.
+  const pickSeq = useRef(0);
+
+  useEffect(() => {
+    if (!previewUrl) return;
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  // Back on this step: preview the kept video again.
+  useEffect(() => {
+    const seq = pickSeq.current;
+    if (descriptor !== '') {
+      void loadPitchVideo().then((blob) => {
+        if (seq !== pickSeq.current) return;
+        setRestoring(false);
+        if (blob) setPreviewUrl(URL.createObjectURL(blob));
+      });
+    }
+    return () => {
+      pickSeq.current++;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function pick(file: File) {
+    const seq = ++pickSeq.current;
+    setError(null);
+    setChecking(true);
+    const check = await checkPitchVideo(file, readDuration);
+    if (seq !== pickSeq.current) return;
+    setChecking(false);
+    if (!check.ok) {
+      setError(check.message);
+      return;
+    }
+    void savePitchVideo(file);
+    setRestoring(false);
+    setPreviewUrl(URL.createObjectURL(file));
+    onChange(check.descriptor);
+  }
+
+  function remove() {
+    pickSeq.current++;
+    setChecking(false);
+    setError(null);
+    setRestoring(false);
+    setPreviewUrl(null);
+    void clearPitchVideo();
+    onChange('');
+  }
+
+  const hasVideo = descriptor !== '';
+  const lost = hasVideo && !previewUrl && !restoring;
+  return (
+    <fieldset className="field">
+      <legend>{q.label}</legend>
+      {q.help && <p className="help">{q.help}</p>}
+      {hasVideo && previewUrl && <video className="card-video" src={previewUrl} controls playsInline preload="metadata" />}
+      {hasVideo && <p className="video-name">{descriptor}</p>}
+      {lost && <p className="help">This phone no longer has that video. Choose it again, or remove it.</p>}
+      <div className="row">
+        {(!hasVideo || lost) && (
+          <label className="btn btn-file">
+            <input
+              type="file"
+              accept="video/*"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = ''; // lets the same file be picked again after an error
+                if (file) void pick(file);
+              }}
+            />
+            Record or choose a video
+          </label>
+        )}
+        {hasVideo && (
+          <button type="button" className="btn btn-ghost" onClick={remove}>
+            Remove
+          </button>
+        )}
+      </div>
+      {checking && (
+        <p className="help" role="status">
+          Checking the video…
+        </p>
+      )}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
     </fieldset>
   );
 }

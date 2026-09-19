@@ -439,6 +439,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   border: 0;
 }
 
+/* Pitch video question: a button-styled label around a visually hidden file input */
+.btn-file { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.btn-file:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+.video-name { font-weight: 600; overflow-wrap: anywhere; }
+
 /* Scale questions (pressure / transparency / leadership) */
 .scale { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
 .scale-option {

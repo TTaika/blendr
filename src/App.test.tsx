@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Answers, KeywordResult, Profile } from '../shared/types';
 import App from './App';
 import { COMPANIES, COMPANY_BY_ID } from './data/companies';
 import { criteriaFromProfile, randomFeed, rankFeed } from './lib/matching';
 import { STORAGE_KEY } from './lib/storage';
+import { clearPitchVideo, loadPitchVideo, savePitchVideo } from './lib/videoStore';
 import { type DemoState, initialState } from './state/demo';
+import { stubObjectUrls } from './test/objectUrls';
 
 const investorAnswers: Answers = {
   investorName: 'Sara Lind',
@@ -76,6 +78,11 @@ async function confirmStartOver(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('App', () => {
+  afterEach(async () => {
+    await clearPitchVideo();
+    vi.restoreAllMocks();
+  });
+
   it('starts on role select and opens the matching questionnaire', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -151,6 +158,55 @@ describe('App', () => {
 
     await confirmStartOver(user);
     expect(screen.getByRole('button', { name: /I'm a founder/ })).toBeInTheDocument();
+  });
+
+  it('founder: a pitch video from the questionnaire shows on the preview card, and Start over deletes it', async () => {
+    stubObjectUrls();
+    const user = userEvent.setup();
+    preload({ screen: 'screening', mode: 'founder', answers: founderAnswers });
+    const generate = vi.fn(async (): Promise<KeywordResult> => ({
+      summary: 'Payments for bakeries',
+      keywords: [{ id: 'fintech', reason: 'Payments.' }],
+      websiteUsed: false,
+    }));
+    render(<App generate={generate} readVideoDuration={async () => 48} />);
+
+    while (!screen.queryByLabelText('Record or choose a video')) {
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+    }
+    const file = new File(['clip'], 'pitch.mov', { type: 'video/quicktime' });
+    await user.upload(screen.getByLabelText('Record or choose a video'), file);
+    await screen.findByText('pitch.mov · 0:48');
+    expect(saved().answers.pitchVideo).toBe('pitch.mov · 0:48');
+
+    await generateProfile(user);
+    expect(generate).toHaveBeenCalledWith('founder', expect.objectContaining({ pitchVideo: 'pitch.mov · 0:48' }));
+    await user.click(await screen.findByRole('button', { name: 'Submit profile' }));
+    const card = screen.getByRole('article', { name: 'Acme' });
+    await waitFor(() => expect(card.querySelector('.card-details video')).toHaveAttribute('src', expect.stringMatching(/^blob:/)));
+
+    await confirmStartOver(user);
+    expect(await loadPitchVideo()).toBeNull();
+  });
+
+  it('deletes a kept pitch video on Start over, even from another screen', async () => {
+    const user = userEvent.setup();
+    await savePitchVideo(new Blob(['clip'], { type: 'video/mp4' }));
+    preload({ screen: 'screening', mode: 'founder', answers: { ...founderAnswers, pitchVideo: 'pitch.mp4 · 0:30' } });
+    render(<App />);
+    await confirmStartOver(user);
+    expect(await loadPitchVideo()).toBeNull();
+  });
+
+  it('keeps the pitch video when Start over is cancelled', async () => {
+    const user = userEvent.setup();
+    const clip = new Blob(['clip'], { type: 'video/mp4' });
+    await savePitchVideo(clip);
+    preload({ screen: 'screening', mode: 'founder', answers: { ...founderAnswers, pitchVideo: 'pitch.mp4 · 0:30' } });
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Start over' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Start over?' })).getByRole('button', { name: 'Cancel' }));
+    expect(await loadPitchVideo()).toBe(clip);
   });
 
   it('shows only one Start over button on the founder preview screen', async () => {

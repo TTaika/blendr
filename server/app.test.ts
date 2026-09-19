@@ -4,6 +4,7 @@ import path from 'node:path';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
+import type { ModelCall } from './keywords';
 
 const noWebsite = async () => null;
 const okModel = async () => JSON.stringify({ summary: 'Grid software', keywords: [{ id: 'climate', reason: 'Grid' }] });
@@ -14,6 +15,15 @@ describe('POST /api/keywords', () => {
     const res = await request(app).post('/api/keywords').send({ role: 'founder', answers: { companyName: 'Acme' } });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ summary: 'Grid software', keywords: [{ id: 'climate', reason: 'Grid' }], websiteUsed: false });
+  });
+
+  it('accepts a founder pitch video descriptor but never passes it to the model', async () => {
+    const model = vi.fn<ModelCall>(okModel);
+    const app = createApp({ model, fetchWebsite: noWebsite });
+    const answers = { companyName: 'Acme', pitchVideo: 'acme-pitch.mov · 0:48' };
+    const res = await request(app).post('/api/keywords').send({ role: 'founder', answers });
+    expect(res.status).toBe(200);
+    expect(model.mock.calls[0][0]).not.toContain('acme-pitch.mov');
   });
 
   it('rejects malformed requests with 400', async () => {

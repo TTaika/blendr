@@ -3,6 +3,8 @@ import type { Company, KeywordResult } from '../shared/types';
 import { COMPANIES, COMPANY_BY_ID } from './data/companies';
 import { requestKeywords, type RequestKeywords } from './lib/api';
 import { criteriaFromProfile, randomFeed, rankFeed } from './lib/matching';
+import type { ReadVideoDuration } from './lib/pitchVideo';
+import { clearPitchVideo } from './lib/videoStore';
 import { Connect } from './screens/Connect';
 import { FounderPreview } from './screens/FounderPreview';
 import { ProfileReview } from './screens/ProfileReview';
@@ -16,9 +18,10 @@ export interface AppProps {
   generate?: RequestKeywords;
   random?: () => number;
   swipeExitMs?: number;
+  readVideoDuration?: ReadVideoDuration;
 }
 
-export default function App({ generate = requestKeywords, random = Math.random, swipeExitMs }: AppProps) {
+export default function App({ generate = requestKeywords, random = Math.random, swipeExitMs, readVideoDuration }: AppProps) {
   const [state, dispatch] = useDemo();
   const [confirmingReset, setConfirmingReset] = useState(false);
   const screen = resolveScreen(state);
@@ -47,6 +50,7 @@ export default function App({ generate = requestKeywords, random = Math.random, 
 
   function confirmReset() {
     setConfirmingReset(false);
+    void clearPitchVideo();
     dispatch({ type: 'reset' });
   }
 
@@ -69,6 +73,7 @@ export default function App({ generate = requestKeywords, random = Math.random, 
             onGenerated={onGenerated}
             onManual={() => dispatch({ type: 'profileDrafted', summary: '', keywords: [] })}
             generate={generate}
+            readVideoDuration={readVideoDuration}
           />
         );
       case 'review':

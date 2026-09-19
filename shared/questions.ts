@@ -1,7 +1,9 @@
 import { STAGES, TAXONOMY } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'email' | 'single' | 'multi' | 'range' | 'scale';
+// 'video' answers are a short descriptor ("pitch.mov · 0:48"); the video itself stays on the phone
+// (src/lib/videoStore.ts).
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'email' | 'single' | 'multi' | 'range' | 'scale' | 'video';
 
 export interface QuestionOption {
   id: string;
@@ -36,7 +38,7 @@ export interface Question {
   placeholder?: string;
   /** Consecutive questions sharing a page render together on one questionnaire step. */
   page?: string;
-  /** When true, this question's answer is never sent to the AI (e.g. personal contact details). */
+  /** When true, this question's answer is never sent to the AI (e.g. personal contact details, the pitch video). */
   excludeFromAi?: boolean;
 }
 
@@ -160,6 +162,7 @@ export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'team', label: 'Your team and experience', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'involvement', label: 'What kind of investor involvement do you want?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'whyInvest', label: 'Why should an investor invest in you now?', kind: 'longtext', required: true, maxLength: 400 },
+  { id: 'pitchVideo', label: 'Add a pitch video (max 1 minute)', help: 'Optional. Investors see it on your profile.', kind: 'video', required: false, excludeFromAi: true },
   scaleQuestion('pressure', 'How do you handle high-pressure moments?', 'I need calm to think clearly', 'I do my best work under fire'),
   scaleQuestion('transparency', 'How openly does information flow in your company?', 'Need-to-know basis', 'Everything is shared, good and bad'),
   scaleQuestion('leadership', 'What kind of leader are you?', 'Loose: I set direction and let go', 'Tight: I stay close to every decision'),

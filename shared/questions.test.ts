@@ -16,7 +16,7 @@ describe('questions', () => {
       'companyName', 'website', 'contactName', 'contactEmail',
       'values', 'stage', 'raise', 'problemSolution',
       'growthMoM', 'revenue', 'customers', 'retention', 'runway',
-      'team', 'involvement', 'whyInvest',
+      'team', 'involvement', 'whyInvest', 'pitchVideo',
       'pressure', 'transparency', 'leadership',
     ]);
     expect(ids(INVESTOR_QUESTIONS)).toEqual([
@@ -28,11 +28,13 @@ describe('questions', () => {
 
   it('groups the founder basics questions and the metrics questions into one step each, and gives every other question its own step', () => {
     const steps = questionSteps('founder');
-    expect(steps).toHaveLength(12);
+    expect(steps).toHaveLength(13);
     expect(ids(steps[0])).toEqual(['companyName', 'website', 'contactName', 'contactEmail']);
     expect(ids(steps[1])).toEqual(['values']);
     expect(ids(steps[5])).toEqual(['growthMoM', 'revenue', 'customers', 'retention', 'runway']);
-    expect(ids(steps[11])).toEqual(['leadership']);
+    expect(ids(steps[8])).toEqual(['whyInvest']);
+    expect(ids(steps[9])).toEqual(['pitchVideo']);
+    expect(ids(steps[12])).toEqual(['leadership']);
     const singleQuestionSteps = steps.filter((_, i) => i !== 0 && i !== 5);
     for (const step of singleQuestionSteps) expect(step).toHaveLength(1);
   });
@@ -73,6 +75,27 @@ describe('questions', () => {
     expect(missingRequired('founder', { ...base, contactEmail: 'nope' }).map((q) => q.id)).toContain('contactEmail');
     expect(missingRequired('founder', { ...base, contactEmail: 'a@b' }).map((q) => q.id)).toContain('contactEmail');
     expect(missingRequired('founder', base).map((q) => q.id)).toContain('contactEmail');
+  });
+
+  it('asks founders for an optional pitch video that never reaches the AI', () => {
+    const q = FOUNDER_QUESTIONS.find((x) => x.id === 'pitchVideo')!;
+    expect(q).toMatchObject({
+      label: 'Add a pitch video (max 1 minute)',
+      help: 'Optional. Investors see it on your profile.',
+      kind: 'video',
+      required: false,
+      excludeFromAi: true,
+    });
+    expect(q.page).toBeUndefined();
+    expect(missingRequired('founder', {}).map((x) => x.id)).not.toContain('pitchVideo');
+    expect(missingRequired('founder', { pitchVideo: '' }).map((x) => x.id)).not.toContain('pitchVideo');
+  });
+
+  it('formats a pitch video answer as its descriptor', () => {
+    const q = FOUNDER_QUESTIONS.find((x) => x.id === 'pitchVideo')!;
+    expect(formatAnswer(q, ' pitch.mov · 0:48 ')).toBe('pitch.mov · 0:48');
+    expect(formatAnswer(q, '')).toBe('');
+    expect(formatAnswer(q, undefined)).toBe('');
   });
 
   it('treats the founder website as optional', () => {

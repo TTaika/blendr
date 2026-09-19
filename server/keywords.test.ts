@@ -67,6 +67,12 @@ describe('buildPrompt', () => {
     expect(prompt).toContain('Acme Grid');
   });
 
+  it('never sends the founder pitch video answer to the AI', () => {
+    const prompt = buildPrompt('founder', { ...founderAnswers, pitchVideo: 'grid-pitch.mov · 0:48' }, null);
+    expect(prompt).not.toContain('grid-pitch.mov');
+    expect(prompt).not.toContain('pitch video');
+  });
+
   it('includes the investor personality and sector rules referencing valuesWanted and risk', () => {
     const prompt = buildPrompt('investor', investorAnswers, null);
     expect(prompt).toContain('Pick 1-4 sector keywords from the sectors they say they prefer in what they are looking for in a startup; if they name none, pick none.');
