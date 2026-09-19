@@ -7,6 +7,7 @@ import type { ReadVideoDuration } from './lib/pitchVideo';
 import { clearPitchVideo } from './lib/videoStore';
 import { Connect } from './screens/Connect';
 import { FounderPreview } from './screens/FounderPreview';
+import { MySlush } from './screens/MySlush';
 import { ProfileReview } from './screens/ProfileReview';
 import { RoleSelect } from './screens/RoleSelect';
 import { Screening } from './screens/Screening';
@@ -48,7 +49,8 @@ export default function App({ generate = requestKeywords, random = Math.random, 
     setConfirmingReset(true);
   }
 
-  function confirmReset() {
+  // Clears this phone's data: a confirmed Start over, or Restart the demo on the My Slush screen.
+  function resetDemo() {
     setConfirmingReset(false);
     void clearPitchVideo();
     dispatch({ type: 'reset' });
@@ -113,7 +115,15 @@ export default function App({ generate = requestKeywords, random = Math.random, 
         );
       }
       case 'connect':
-        return <Connect companies={likedCompanies} onBackToSwiping={() => dispatch({ type: 'openSwipe' })} />;
+        return (
+          <Connect
+            companies={likedCompanies}
+            onBackToSwiping={() => dispatch({ type: 'openSwipe' })}
+            onBookMeeting={() => dispatch({ type: 'bookMeeting' })}
+          />
+        );
+      case 'my-slush':
+        return <MySlush onRestart={resetDemo} />;
     }
     return <RoleSelect onChoose={choose} />;
   }
@@ -121,8 +131,9 @@ export default function App({ generate = requestKeywords, random = Math.random, 
   return (
     <>
       {renderScreen()}
-      {screen !== 'role' && screen !== 'founder-preview' && (
+      {screen !== 'role' && screen !== 'founder-preview' && screen !== 'my-slush' && (
         // Screens with a sticky Back/Next bar get the link at the top instead, clear of Back.
+        // (Connect's Book a meeting bar leaves room for it on the left; see theme.css.)
         <button
           type="button"
           className={screen === 'screening' || screen === 'review' ? 'reset reset-top' : 'reset'}
@@ -149,7 +160,7 @@ export default function App({ generate = requestKeywords, random = Math.random, 
                 Cancel
               </button>
               <span className="spacer" />
-              <button type="button" className="btn btn-primary" onClick={confirmReset}>
+              <button type="button" className="btn btn-primary" onClick={resetDemo}>
                 Start over
               </button>
             </div>

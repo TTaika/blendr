@@ -104,6 +104,15 @@ describe('demoReducer', () => {
     expect(s.likedIds).toEqual(['a']);
   });
 
+  it('bookMeeting opens the My Slush hand-off, but only with likes', () => {
+    const connect = run([{ type: 'skipToSwiping', feed: feed('a', 'b') }, { type: 'like', companyId: 'a' }, { type: 'openConnect' }]);
+    const s = demoReducer(connect, { type: 'bookMeeting' });
+    expect(s).toEqual({ ...connect, screen: 'my-slush' });
+    expect(demoReducer(s, { type: 'reset' })).toEqual(initialState);
+    const noLikes = run([{ type: 'skipToSwiping', feed: feed('a') }, { type: 'openConnect' }]);
+    expect(demoReducer(noLikes, { type: 'bookMeeting' })).toBe(noLikes);
+  });
+
   it('reset returns to the initial state', () => {
     expect(run([{ type: 'skipToSwiping', feed: feed('a') }, { type: 'reset' }])).toEqual(initialState);
   });
@@ -115,6 +124,7 @@ describe('isDemoState', () => {
     expect(isDemoState(JSON.parse(JSON.stringify(run([{ type: 'skipToSwiping', feed: feed('a') }]))))).toBe(true);
     expect(isDemoState(null)).toBe(false);
     expect(isDemoState({ ...initialState, version: 2 })).toBe(false);
+    expect(isDemoState({ ...initialState, screen: 'my-slush', mode: 'investor' })).toBe(true);
     expect(isDemoState({ ...initialState, screen: 'nowhere' })).toBe(false);
     expect(isDemoState({ ...initialState, likedIds: 'a' })).toBe(false);
   });
@@ -128,5 +138,7 @@ describe('resolveScreen', () => {
     expect(resolveScreen({ ...initialState, screen: 'swipe', mode: null })).toBe('role');
     expect(resolveScreen(run([{ type: 'chooseRole', role: 'founder' }]))).toBe('screening');
     expect(resolveScreen(run([{ type: 'skipToSwiping', feed: feed('a') }]))).toBe('swipe');
+    expect(resolveScreen({ ...initialState, screen: 'my-slush', mode: null })).toBe('role');
+    expect(resolveScreen({ ...initialState, screen: 'my-slush', mode: 'skip' })).toBe('my-slush');
   });
 });

@@ -486,3 +486,50 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 }
 .swipe-card .card { padding: 16px; gap: 16px; }
 .swipe-card .card-head { gap: 10px; }
+
+/* ==========================================================================
+   Book a meeting: Connect's bottom bar and the mock hand-off to My Slush.
+   Only the look of a hand-off: nothing is booked, linked or sent.
+   ========================================================================== */
+
+/* Connect with likes: the sticky bar (.step-actions) owns the bottom edge, so the screen drops
+   the strip kept for the Start over link, and the link sits level with the button, on its left. */
+.screen.connect-has-bar { padding-bottom: 0; }
+.connect-has-bar ~ .reset { bottom: calc(14px + env(safe-area-inset-bottom)); }
+.connect-actions { padding-left: 88px; } /* clear of the fixed Start over link */
+@media (min-width: 660px) {
+  .connect-actions { padding-left: 0; } /* the link sits outside the 480px column */
+}
+
+/* My Slush: a centred heading over a spinner that never stops, Restart the demo at the foot.
+   There is no Start over link here, so the screen needs no room kept for it. */
+.screen.my-slush { padding-bottom: 0; }
+.my-slush-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  text-align: center;
+}
+/* Syne's "Redirecting" is ~8.9em wide: 9.5vw keeps it inside the 16px gutters on any phone. */
+.my-slush h1 { font-size: clamp(1.9rem, 9.5vw, 3rem); text-wrap: balance; overflow-wrap: anywhere; }
+.spinner {
+  width: 72px;
+  height: 72px;
+  border: 6px solid var(--tint);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: slush-spin 0.9s linear infinite;
+}
+@keyframes slush-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes slush-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: slush-pulse 2.4s ease-in-out infinite alternate; }
+}

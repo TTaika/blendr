@@ -254,6 +254,32 @@ describe('App', () => {
     expect(saved()).toEqual(initialState);
   });
 
+  it('Book a meeting on Connect shows the My Slush hand-off, and Restart the demo clears everything', async () => {
+    const user = userEvent.setup();
+    await savePitchVideo(new Blob(['clip'], { type: 'video/mp4' }));
+    const first = render(<App random={() => 0} swipeExitMs={0} />);
+    await user.click(screen.getByRole('button', { name: /Skip to swiping/ }));
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    await user.click(await screen.findByRole('button', { name: 'Connect (1)' }));
+
+    await user.click(screen.getByRole('button', { name: 'Book a meeting' }));
+    expect(screen.getByRole('heading', { name: 'Redirecting you to My Slush' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Start over' })).not.toBeInTheDocument();
+    expect(saved().screen).toBe('my-slush');
+
+    // Survives a reload, like every other screen.
+    first.unmount();
+    render(<App />);
+    expect(screen.getByRole('heading', { name: 'Redirecting you to My Slush' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Restart the demo' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Skip to swiping/ })).toBeInTheDocument();
+    expect(saved()).toEqual(initialState);
+    await waitFor(async () => expect(await loadPitchVideo()).toBeNull());
+  });
+
   it('keeps everything when the reset is not confirmed', async () => {
     const user = userEvent.setup();
     render(<App random={() => 0} swipeExitMs={0} />);

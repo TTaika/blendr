@@ -6,9 +6,10 @@ import { CompanyCard } from '../components/CompanyCard';
 export interface ConnectProps {
   companies: Company[];
   onBackToSwiping: () => void;
+  onBookMeeting: () => void;
 }
 
-export function Connect({ companies, onBackToSwiping }: ConnectProps) {
+export function Connect({ companies, onBackToSwiping, onBookMeeting }: ConnectProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = companies.find((c) => c.id === selectedId);
   const backButton = (
@@ -33,7 +34,7 @@ export function Connect({ companies, onBackToSwiping }: ConnectProps) {
   }
 
   return (
-    <main className="screen">
+    <main className={companies.length > 0 ? 'screen connect-has-bar' : 'screen'}>
       <header className="row">
         <div>
           <h1>Connect</h1>
@@ -47,18 +48,25 @@ export function Connect({ companies, onBackToSwiping }: ConnectProps) {
       {companies.length === 0 ? (
         <p className="panel muted">No likes yet. Swipe right on the companies you want to meet.</p>
       ) : (
-        <ul className="liked-list">
-          {companies.map((c) => (
-            <li key={c.id}>
-              <button type="button" className="liked-item" onClick={() => setSelectedId(c.id)}>
-                <span className="liked-name">{c.name}</span>
-                <span className="liked-meta muted">
-                  {stageLabel(c.stage)} / {c.values.join(' / ')}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="liked-list">
+            {companies.map((c) => (
+              <li key={c.id}>
+                <button type="button" className="liked-item" onClick={() => setSelectedId(c.id)}>
+                  <span className="liked-name">{c.name}</span>
+                  <span className="liked-meta muted">
+                    {stageLabel(c.stage)} / {c.values.join(' / ')}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="step-actions connect-actions">
+            <button type="button" className="btn btn-primary" onClick={onBookMeeting}>
+              Book a meeting
+            </button>
+          </div>
+        </>
       )}
     </main>
   );

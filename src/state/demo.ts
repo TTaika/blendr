@@ -1,9 +1,9 @@
 import type { AnswerValue, Answers, FeedEntry, Profile, ProfileKeyword, Role } from '../../shared/types';
 
 export type Mode = Role | 'skip';
-export type Screen = 'role' | 'screening' | 'review' | 'founder-preview' | 'swipe' | 'connect';
+export type Screen = 'role' | 'screening' | 'review' | 'founder-preview' | 'swipe' | 'connect' | 'my-slush';
 
-const SCREENS: Screen[] = ['role', 'screening', 'review', 'founder-preview', 'swipe', 'connect'];
+const SCREENS: Screen[] = ['role', 'screening', 'review', 'founder-preview', 'swipe', 'connect', 'my-slush'];
 
 export interface DemoState {
   version: 1;
@@ -46,6 +46,7 @@ export type DemoAction =
   | { type: 'dismissConnectPrompt' }
   | { type: 'openConnect' }
   | { type: 'openSwipe' }
+  | { type: 'bookMeeting' }
   | { type: 'reviewPassed' }
   | { type: 'reset' };
 
@@ -98,6 +99,9 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       return { ...state, screen: 'connect', showConnectPrompt: false };
     case 'openSwipe':
       return { ...state, screen: 'swipe' };
+    case 'bookMeeting':
+      // Only the look of a hand-off to My Slush: nothing is booked or sent anywhere.
+      return state.likedIds.length > 0 ? { ...state, screen: 'my-slush' } : state;
     case 'reviewPassed':
       return { ...state, seenIds: [...state.likedIds] };
     case 'reset':
@@ -134,6 +138,7 @@ export function resolveScreen(state: DemoState): Screen {
       return state.mode === 'founder' && state.profile ? 'founder-preview' : 'role';
     case 'swipe':
     case 'connect':
+    case 'my-slush':
       return state.mode === 'investor' || state.mode === 'skip' ? state.screen : 'role';
     default:
       return 'role';
