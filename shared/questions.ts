@@ -122,7 +122,6 @@ export const VALUE_OPTIONS: QuestionOption[] = [
   { id: 'integrity', label: 'Integrity' },
   { id: 'innovation', label: 'Bold innovation' },
   { id: 'collaboration', label: 'Collaboration' },
-  { id: 'ownership', label: 'Ownership' },
   { id: 'craftsmanship', label: 'Craftsmanship' },
   { id: 'inclusion', label: 'Diversity & inclusion' },
   { id: 'frugality', label: 'Frugality' },

@@ -114,12 +114,13 @@ describe('Screening', () => {
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
   });
 
-  it('shows the values step as 14 checkbox options', async () => {
+  it('shows the values step as 13 checkbox options', async () => {
     const user = userEvent.setup();
     render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
     await user.click(screen.getByRole('button', { name: 'Next' }));
     const group = screen.getByRole('group', { name: "Choose your company's three main values" });
-    expect(within(group).getAllByRole('checkbox')).toHaveLength(14);
+    expect(within(group).getAllByRole('checkbox')).toHaveLength(13);
+    expect(within(group).queryByLabelText('Ownership')).not.toBeInTheDocument();
   });
 
   it('disables unselected options once 3 are picked, keeps selected ones enabled, and shows the count', async () => {

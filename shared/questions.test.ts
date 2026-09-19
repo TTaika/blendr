@@ -24,12 +24,14 @@ describe('questions', () => {
     ]);
   });
 
-  it('makes the values question a multi-choice with at most 3 selections from 14 options', () => {
+  it('makes the values question a multi-choice with at most 3 selections from 13 options', () => {
     const values = FOUNDER_QUESTIONS.find((q) => q.id === 'values')!;
     expect(values.kind).toBe('multi');
     expect(values.maxSelections).toBe(3);
     expect(values.options).toEqual(VALUE_OPTIONS);
-    expect(VALUE_OPTIONS).toHaveLength(14);
+    expect(VALUE_OPTIONS).toHaveLength(13);
+    expect(VALUE_OPTIONS.map((o) => o.id)).not.toContain('ownership');
+    expect(PERSONALITY_OPTIONS.map((o) => o.label)).not.toContain('Ownership');
   });
 
   it('makes the valuesWanted question a multi-choice with at most 3 selections from the 9 personality options', () => {
