@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import type { Company, FeedEntry } from '../../shared/types';
 import { CompanyCard } from '../components/CompanyCard';
 
@@ -44,13 +44,19 @@ export function Swipe({
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState<Decision | null>(null);
+  const [burst, setBurst] = useState<{ id: number; companyName: string } | null>(null);
   const drag = useRef<{ startX: number; pointerId: number } | null>(null);
   const timerRef = useRef<number | null>(null);
+  const burstTimerRef = useRef<number | null>(null);
+  const burstId = useRef(0);
 
   useEffect(() => {
     return () => {
       if (timerRef.current !== null) {
         window.clearTimeout(timerRef.current);
+      }
+      if (burstTimerRef.current !== null) {
+        window.clearTimeout(burstTimerRef.current);
       }
     };
   }, []);
@@ -58,6 +64,17 @@ export function Swipe({
   function decide(decision: Decision) {
     if (!top || exiting) return;
     setExiting(decision);
+    if (decision === 'like' && company) {
+      burstId.current += 1;
+      setBurst({ id: burstId.current, companyName: company.name });
+      if (burstTimerRef.current !== null) {
+        window.clearTimeout(burstTimerRef.current);
+      }
+      burstTimerRef.current = window.setTimeout(() => {
+        burstTimerRef.current = null;
+        setBurst(null);
+      }, 900);
+    }
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null;
       setExiting(null);
@@ -97,9 +114,19 @@ export function Swipe({
 
   const offset = exiting === 'like' ? window.innerWidth : exiting === 'discard' ? -window.innerWidth : dx;
   const stampOpacity = (sign: 1 | -1) => Math.min(Math.max((sign * offset) / SWIPE_THRESHOLD, 0), 1);
+  const dragRatio = exiting === 'like' ? 1 : exiting === 'discard' ? -1 : Math.max(-1, Math.min(1, dx / SWIPE_THRESHOLD));
+  const dragStyle = {
+    '--drag': dragRatio,
+    '--drag-right': Math.max(dragRatio, 0),
+    '--drag-left': Math.max(-dragRatio, 0),
+  } as CSSProperties;
 
   return (
-    <main className="screen swipe">
+    <main className="screen swipe" style={dragStyle}>
+      <div className="swipe-bg" aria-hidden="true">
+        <span className="aurora aurora-a" />
+        <span className="aurora aurora-b" />
+      </div>
       <header className="row">
         <div>
           <h1>Discover</h1>
@@ -180,6 +207,14 @@ export function Swipe({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {burst && (
+        <div key={burst.id} className="match-burst" role="status" aria-live="polite">
+          <span className="match-band" aria-hidden="true" />
+          <p className="match-word">MATCH</p>
+          <p className="match-with">with {burst.companyName}</p>
         </div>
       )}
     </main>

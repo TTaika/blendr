@@ -56,6 +56,15 @@ describe('Swipe', () => {
     unmount();
   });
 
+  it('shows a match burst on like, naming the company, that disappears after 900ms', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('MATCH');
+    expect(status).toHaveTextContent('with Northlight Grid');
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument(), { timeout: 1500 });
+  });
+
   it('likes and passes with the buttons', async () => {
     const { user, onLike, onDiscard } = setup();
     await user.click(screen.getByRole('button', { name: 'Like' }));
