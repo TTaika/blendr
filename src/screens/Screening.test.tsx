@@ -10,7 +10,7 @@ const founderAnswers: Answers = {
   companyName: 'Acme',
   values: ['Payments trust', 'Baker-first support', 'Simple pricing'],
   stage: 'seed',
-  raise: 't-2m-5m',
+  raise: ['2000', '5000'],
   problem: 'P',
   solution: 'S',
   traction: 'T',
@@ -225,6 +225,27 @@ describe('Screening', () => {
     screen.getByLabelText('Company name').focus();
     await user.keyboard('{Enter}');
     expect(screen.getByText('2 / 11')).toBeInTheDocument();
+  });
+});
+
+describe('Screening: founder raise range slider', () => {
+  it('shows two sliders labelled Minimum raise and Maximum raise', async () => {
+    const user = userEvent.setup();
+    render(
+      <Screening
+        role="founder"
+        answers={{ companyName: 'Acme', values: ['transparency', 'speed', 'integrity'], stage: 'seed' }}
+        onAnswer={vi.fn()}
+        onGenerated={vi.fn()}
+        onManual={vi.fn()}
+        generate={vi.fn(async () => result)}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' })); // companyName -> values
+    await user.click(screen.getByRole('button', { name: 'Next' })); // values -> stage
+    await user.click(screen.getByRole('button', { name: 'Next' })); // stage -> raise
+    expect(screen.getByLabelText('Minimum raise')).toBeInTheDocument();
+    expect(screen.getByLabelText('Maximum raise')).toBeInTheDocument();
   });
 });
 

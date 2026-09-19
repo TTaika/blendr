@@ -1,4 +1,4 @@
-import { STAGES, TICKETS } from './taxonomy';
+import { STAGES } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
 export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'range';
@@ -23,6 +23,7 @@ export interface Question {
   maxSelections?: number;
   options?: QuestionOption[];
   stops?: QuestionStop[];
+  rangeLabels?: [string, string];
 }
 
 // Values are in € thousands.
@@ -55,6 +56,13 @@ export function parseRange(value: AnswerValue | undefined): [number, number] | n
   return [min, max];
 }
 
+/** Formats a `[min, max]` € thousands range using the TICKET_STOPS labels, e.g. "€2M – €5M". */
+export function formatRange(range: [number, number]): string {
+  const label = (value: number) => TICKET_STOPS.find((s) => s.value === value)?.label ?? String(value);
+  const [min, max] = range;
+  return `${label(min)} – ${label(max)}`;
+}
+
 // Option ids are taxonomy keyword ids, so the chosen answer maps straight to a keyword.
 const INVOLVEMENT_OPTIONS: QuestionOption[] = [
   { id: 'hands-on', label: 'Hands-on: weekly sparring and operational help' },
@@ -84,7 +92,7 @@ export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60 },
   { id: 'values', label: "Choose your company's three main values", help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: VALUE_OPTIONS },
   { id: 'stage', label: 'Current funding stage', kind: 'single', required: true, options: [...STAGES] },
-  { id: 'raise', label: 'How much are you raising?', kind: 'single', required: true, options: [...TICKETS] },
+  { id: 'raise', label: 'How much are you raising?', help: 'Drag both ends to set the range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum raise', 'Maximum raise'] },
   { id: 'problem', label: 'What problem are you solving?', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'solution', label: 'How do you solve it?', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'traction', label: 'Key numbers and growth', help: 'e.g. ARR, month-on-month growth, users, pilots', kind: 'longtext', required: true, maxLength: 300 },
@@ -98,7 +106,7 @@ export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'investorName', label: 'Your name', kind: 'text', required: true, maxLength: 60 },
   { id: 'fundName', label: 'Fund or firm', kind: 'text', required: true, maxLength: 60 },
   { id: 'stages', label: 'Which stages do you invest in?', kind: 'multi', required: true, options: [...STAGES] },
-  { id: 'tickets', label: 'What ticket sizes can you provide?', help: 'Drag both ends to set your range.', kind: 'range', required: true, stops: TICKET_STOPS },
+  { id: 'tickets', label: 'What ticket sizes can you provide?', help: 'Drag both ends to set your range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum ticket', 'Maximum ticket'] },
   { id: 'thesis', label: 'Describe your investment thesis', help: 'Sectors, business models, what excites you', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'regions', label: 'Which regions do you invest in?', kind: 'text', required: true, maxLength: 120 },
   { id: 'involvement', label: 'How involved are you after investing?', kind: 'single', required: true, options: INVOLVEMENT_OPTIONS },
@@ -123,17 +131,11 @@ export function missingRequired(role: Role, answers: Answers): Question[] {
   });
 }
 
-function stopLabel(question: Question, value: number): string {
-  return question.stops?.find((s) => s.value === value)?.label ?? String(value);
-}
-
 export function formatAnswer(question: Question, value: AnswerValue | undefined): string {
   if (value === undefined) return '';
   if (question.kind === 'range') {
     const range = parseRange(value);
-    if (!range) return '';
-    const [min, max] = range;
-    return `${stopLabel(question, min)} – ${stopLabel(question, max)}`;
+    return range ? formatRange(range) : '';
   }
   const label = (id: string) => question.options?.find((o) => o.id === id)?.label ?? id;
   if (Array.isArray(value)) {

@@ -4,13 +4,10 @@ import {
   KEYWORD_IDS,
   STAGES,
   TAXONOMY,
-  TICKETS,
   getKeyword,
   isKeywordId,
   isStageId,
-  isTicketId,
   stageLabel,
-  ticketLabel,
 } from './taxonomy';
 
 describe('taxonomy', () => {
@@ -30,14 +27,10 @@ describe('taxonomy', () => {
     expect(isKeywordId('nope')).toBe(false);
   });
 
-  it('defines stages and ticket buckets with labels and guards', () => {
+  it('defines stages with labels and guards', () => {
     expect(STAGES.map((s) => s.id)).toEqual(['pre-seed', 'seed', 'series-a', 'series-b-plus']);
-    expect(TICKETS).toHaveLength(5);
     expect(stageLabel('series-a')).toBe('Series A');
-    expect(ticketLabel('t-500k-2m')).toBe('€500k – €2M');
     expect(isStageId('seed')).toBe(true);
     expect(isStageId('series-z')).toBe(false);
-    expect(isTicketId('t-15m-plus')).toBe(true);
-    expect(isTicketId(42)).toBe(false);
   });
 });

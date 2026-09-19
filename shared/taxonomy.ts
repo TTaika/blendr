@@ -92,30 +92,3 @@ export function isStageId(value: unknown): value is StageId {
 export function stageLabel(id: string): string {
   return STAGES.find((s) => s.id === id)?.label ?? id;
 }
-
-export const TICKETS = [
-  { id: 't-under-500k', label: 'Under €500k' },
-  { id: 't-500k-2m', label: '€500k – €2M' },
-  { id: 't-2m-5m', label: '€2M – €5M' },
-  { id: 't-5m-15m', label: '€5M – €15M' },
-  { id: 't-15m-plus', label: '€15M+' },
-] as const;
-
-export type TicketId = (typeof TICKETS)[number]['id'];
-
-export function isTicketId(value: unknown): value is TicketId {
-  return TICKETS.some((t) => t.id === value);
-}
-
-// Bucket min (inclusive) to max (exclusive), in € thousands.
-export const TICKET_RANGES: Record<TicketId, [number, number]> = {
-  't-under-500k': [0, 500],
-  't-500k-2m': [500, 2000],
-  't-2m-5m': [2000, 5000],
-  't-5m-15m': [5000, 15000],
-  't-15m-plus': [15000, Infinity],
-};
-
-export function ticketLabel(id: string): string {
-  return TICKETS.find((t) => t.id === id)?.label ?? id;
-}

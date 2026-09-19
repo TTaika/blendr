@@ -35,7 +35,7 @@ const founderAnswers: Answers = {
   companyName: 'Acme',
   values: ['transparency', 'speed', 'integrity'],
   stage: 'seed',
-  raise: 't-500k-2m',
+  raise: ['500', '2000'],
   problem: 'P',
   solution: 'S',
   traction: 'T',

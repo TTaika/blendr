@@ -8,7 +8,7 @@ const founderAnswers: Answers = {
   website: 'acme.example',
   values: ['craftsmanship', 'customer-obsession', 'sustainability'],
   stage: 'seed',
-  raise: 't-2m-5m',
+  raise: ['2000', '5000'],
   problem: 'Grids lack flexibility.',
   solution: 'We shift building loads.',
   traction: '€500k ARR',

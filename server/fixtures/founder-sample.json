@@ -4,7 +4,7 @@
     "companyName": "Northlight Grid",
     "values": ["craftsmanship", "customer-obsession", "sustainability"],
     "stage": "seed",
-    "raise": "t-2m-5m",
+    "raise": ["2000", "5000"],
     "problem": "Grids need flexibility to absorb wind and solar, but buildings with controllable heating sit idle.",
     "solution": "We connect building automation to reserve markets and shift heating loads automatically.",
     "traction": "ARR 620k EUR, 14% month-on-month growth, 410 buildings connected in Finland and Sweden.",

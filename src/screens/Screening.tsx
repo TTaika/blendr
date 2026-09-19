@@ -207,6 +207,7 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
 
 function RangeField({ question: q, value, invalid, onChange }: FieldProps) {
   const label = q.required ? q.label : `${q.label} (optional)`;
+  const [minLabel, maxLabel] = q.rangeLabels ?? ['Minimum', 'Maximum'];
   const stops = q.stops ?? [];
   const lastIdx = stops.length - 1;
   const range = parseRange(value);
@@ -244,7 +245,7 @@ function RangeField({ question: q, value, invalid, onChange }: FieldProps) {
           max={lastIdx}
           step={1}
           value={minIdx}
-          aria-label="Minimum ticket"
+          aria-label={minLabel}
           aria-valuetext={stops[minIdx]?.label}
           aria-invalid={invalid || undefined}
           onChange={(e) => report(Math.min(Number(e.target.value), maxIdx), maxIdx)}
@@ -255,7 +256,7 @@ function RangeField({ question: q, value, invalid, onChange }: FieldProps) {
           max={lastIdx}
           step={1}
           value={maxIdx}
-          aria-label="Maximum ticket"
+          aria-label={maxLabel}
           aria-valuetext={stops[maxIdx]?.label}
           aria-invalid={invalid || undefined}
           onChange={(e) => report(minIdx, Math.max(Number(e.target.value), minIdx))}

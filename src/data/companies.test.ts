@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { COMPANIES, COMPANY_BY_ID } from './companies';
-import { getKeyword, isKeywordId, isStageId, isTicketId } from '../../shared/taxonomy';
-import { VALUE_OPTIONS } from '../../shared/questions';
+import { getKeyword, isKeywordId, isStageId } from '../../shared/taxonomy';
+import { TICKET_STOPS, VALUE_OPTIONS } from '../../shared/questions';
 
 const VALUE_LABELS = new Set(VALUE_OPTIONS.map((o) => o.label));
+const TICKET_STOP_VALUES = new Set(TICKET_STOPS.map((s) => s.value));
 
 describe('test companies', () => {
   it('has 12 companies with unique ids, all indexed by id', () => {
@@ -19,7 +20,11 @@ describe('test companies', () => {
       expect(VALUE_LABELS.has(v), `unknown value label ${v}`).toBe(true);
     }
     expect(isStageId(c.stage)).toBe(true);
-    expect(isTicketId(c.raise)).toBe(true);
+    expect(c.raise).toHaveLength(2);
+    const [raiseMin, raiseMax] = c.raise;
+    expect(TICKET_STOP_VALUES.has(raiseMin), `raise min ${raiseMin} is not a TICKET_STOPS value`).toBe(true);
+    expect(TICKET_STOP_VALUES.has(raiseMax), `raise max ${raiseMax} is not a TICKET_STOPS value`).toBe(true);
+    expect(raiseMin).toBeLessThanOrEqual(raiseMax);
     const keywordIds = c.keywords.map((k) => k.id);
     expect(new Set(keywordIds).size).toBe(keywordIds.length);
     for (const k of c.keywords) {

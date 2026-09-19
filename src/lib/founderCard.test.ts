@@ -8,7 +8,7 @@ const profile: Profile = {
     companyName: ' Acme ',
     values: ['transparency', 'bogus-id', 'speed', 'integrity', 'craftsmanship'],
     stage: 'series-a',
-    raise: 't-5m-15m',
+    raise: ['5000', '10000'],
     problem: 'P',
     solution: 'S',
     traction: '€1M ARR',
@@ -26,7 +26,7 @@ describe('companyFromFounderProfile', () => {
       id: 'founder-preview',
       name: 'Acme',
       stage: 'series-a',
-      raise: 't-5m-15m',
+      raise: [5000, 10000],
       problem: 'P',
       solution: 'S',
       team: 'Team',
@@ -43,7 +43,7 @@ describe('companyFromFounderProfile', () => {
     const c = companyFromFounderProfile({ ...profile, answers: {} });
     expect(c.name).toBe('Your company');
     expect(c.stage).toBe('pre-seed');
-    expect(c.raise).toBe('t-under-500k');
+    expect(c.raise).toEqual([0, 100000]);
     expect(c.keyNumbers).toEqual([]);
     expect(c.values).toEqual([]);
   });

@@ -1,4 +1,4 @@
-import type { StageId, TicketId } from './taxonomy';
+import type { StageId } from './taxonomy';
 
 export type Role = 'founder' | 'investor';
 
@@ -43,7 +43,7 @@ export interface Company {
   name: string;
   values: string[]; // exactly three short company values, max 30 characters each
   stage: StageId;
-  raise: TicketId;
+  raise: [number, number]; // € thousands range on the TICKET_STOPS scale; 100000 means "€100M+"
   keywords: { id: string; reason: string }[];
   problem: string;
   solution: string;

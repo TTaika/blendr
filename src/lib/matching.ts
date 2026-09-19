@@ -1,5 +1,5 @@
 import { parseRange } from '../../shared/questions';
-import { TICKET_RANGES, getKeyword, type KeywordCategory } from '../../shared/taxonomy';
+import { getKeyword, type KeywordCategory } from '../../shared/taxonomy';
 import type { AnswerValue, Company, FeedEntry, Profile } from '../../shared/types';
 
 export interface InvestorCriteria {
@@ -36,12 +36,16 @@ export function criteriaFromProfile(profile: Profile): InvestorCriteria {
   };
 }
 
+// 100000 ("€100M+") is the top of the TICKET_STOPS scale and stands for "or more".
+const toUpperBound = (value: number) => (value >= 100000 ? Infinity : value);
+
 function ticketFits(ticketRange: [number, number] | null, raise: Company['raise']): boolean {
   if (!ticketRange) return false;
   const [invMin, invMaxRaw] = ticketRange;
-  const invMax = invMaxRaw >= 100000 ? Infinity : invMaxRaw;
-  const [bucketMin, bucketMax] = TICKET_RANGES[raise];
-  return invMin < bucketMax && invMax >= bucketMin;
+  const invMax = toUpperBound(invMaxRaw);
+  const [compMin, compMaxRaw] = raise;
+  const compMax = toUpperBound(compMaxRaw);
+  return invMin <= compMax && invMax >= compMin;
 }
 
 export function scoreCompany(criteria: InvestorCriteria, company: Company): MatchResult {

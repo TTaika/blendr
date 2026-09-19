@@ -7,7 +7,7 @@ import { FounderPreview } from './FounderPreview';
 
 const profile: Profile = {
   role: 'founder',
-  answers: { companyName: 'Acme', values: ['transparency', 'speed', 'integrity'], stage: 'seed', raise: 't-500k-2m' },
+  answers: { companyName: 'Acme', values: ['transparency', 'speed', 'integrity'], stage: 'seed', raise: ['500', '2000'] },
   summary: '',
   keywords: [
     { id: 'fintech', reason: 'Payments', source: 'ai' },

@@ -1,4 +1,5 @@
-import { stageLabel, ticketLabel } from '../../shared/taxonomy';
+import { formatRange } from '../../shared/questions';
+import { stageLabel } from '../../shared/taxonomy';
 import type { Company } from '../../shared/types';
 import { topKeywords } from '../lib/matching';
 import { KeywordList } from './KeywordList';
@@ -35,7 +36,7 @@ export function CompanyCard({ company, score, matched = [], showContact = false,
         </div>
         <p className="card-values">{company.values.join(' · ')}</p>
         <p className="card-meta muted">
-          {stageLabel(company.stage)} · raising {ticketLabel(company.raise)}
+          {stageLabel(company.stage)} · raising {formatRange(company.raise)}
         </p>
         <KeywordList keywords={keywords} matchedIds={matched} />
       </header>

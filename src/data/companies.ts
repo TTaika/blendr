@@ -9,7 +9,7 @@ export const COMPANIES: Company[] = [
     name: 'Northlight Grid',
     values: ['Sustainability', 'Data-driven decisions', 'Craftsmanship'],
     stage: 'seed',
-    raise: 't-2m-5m',
+    raise: [2000, 5000],
     keywords: [
       { id: 'climate', reason: 'Balances the electricity grid with flexible demand from buildings.' },
       { id: 'b2b-saas', reason: 'Sold as software to property owners and energy operators.' },
@@ -35,7 +35,7 @@ export const COMPANIES: Company[] = [
     name: 'Kide Health',
     values: ['Customer obsession', 'Integrity', 'Social impact'],
     stage: 'series-a',
-    raise: 't-5m-15m',
+    raise: [5000, 10000],
     keywords: [
       { id: 'healthtech', reason: 'Clinical decision support for primary care.' },
       { id: 'ai-ml', reason: 'A trained model ranks the patient queue.' },
@@ -61,7 +61,7 @@ export const COMPANIES: Company[] = [
     name: 'Ledgerleaf',
     values: ['Speed of execution', 'Customer obsession', 'Integrity'],
     stage: 'seed',
-    raise: 't-500k-2m',
+    raise: [500, 2000],
     keywords: [
       { id: 'fintech', reason: 'Automates accounting and bank reconciliation.' },
       { id: 'ai-ml', reason: 'Categorises receipts and invoices automatically.' },
@@ -87,7 +87,7 @@ export const COMPANIES: Company[] = [
     name: 'Frostbyte Robotics',
     values: ['Craftsmanship', 'Customer obsession', 'Long-term thinking'],
     stage: 'series-a',
-    raise: 't-5m-15m',
+    raise: [5000, 10000],
     keywords: [
       { id: 'industrial', reason: 'Automates warehouse inspection.' },
       { id: 'deeptech', reason: 'Proprietary navigation that works at -25 °C.' },
@@ -113,7 +113,7 @@ export const COMPANIES: Company[] = [
     name: 'Loop Pantry',
     values: ['Sustainability', 'Social impact', 'Frugality'],
     stage: 'pre-seed',
-    raise: 't-under-500k',
+    raise: [100, 500],
     keywords: [
       { id: 'foodtech', reason: 'Reduces food waste from bakeries and cafés.' },
       { id: 'consumer', reason: 'Consumers buy through a mobile app.' },
@@ -139,7 +139,7 @@ export const COMPANIES: Company[] = [
     name: 'Quietmind',
     values: ['Integrity', 'Customer obsession', 'Data-driven decisions'],
     stage: 'seed',
-    raise: 't-500k-2m',
+    raise: [500, 2000],
     keywords: [
       { id: 'healthtech', reason: 'Digital therapy for insomnia (CBT-I).' },
       { id: 'consumer', reason: 'Sold directly to people through app stores.' },
@@ -165,7 +165,7 @@ export const COMPANIES: Company[] = [
     name: 'Shieldpath',
     values: ['Data-driven decisions', 'Integrity', 'Craftsmanship'],
     stage: 'series-a',
-    raise: 't-5m-15m',
+    raise: [5000, 10000],
     keywords: [
       { id: 'cybersecurity', reason: 'Security awareness training.' },
       { id: 'ai-ml', reason: 'Generates simulations from real attack data.' },
@@ -191,7 +191,7 @@ export const COMPANIES: Company[] = [
     name: 'Tundra Games',
     values: ['Bold innovation', 'Collaboration', 'Diversity & inclusion'],
     stage: 'seed',
-    raise: 't-2m-5m',
+    raise: [2000, 5000],
     keywords: [
       { id: 'gaming', reason: 'Develops and publishes mobile games.' },
       { id: 'consumer', reason: 'Players are consumers worldwide.' },
@@ -217,7 +217,7 @@ export const COMPANIES: Company[] = [
     name: 'Birchbase',
     values: ['Transparency', 'Long-term thinking', 'Customer obsession'],
     stage: 'pre-seed',
-    raise: 't-under-500k',
+    raise: [100, 500],
     keywords: [
       { id: 'proptech', reason: 'Software for residential property management.' },
       { id: 'b2b-saas', reason: 'Cooperatives and property managers pay per building.' },
@@ -243,7 +243,7 @@ export const COMPANIES: Company[] = [
     name: 'Mycora',
     values: ['Sustainability', 'Craftsmanship', 'Long-term thinking'],
     stage: 'series-b-plus',
-    raise: 't-15m-plus',
+    raise: [25000, 50000],
     keywords: [
       { id: 'biotech', reason: 'Precision fermentation of fungal biomass.' },
       { id: 'foodtech', reason: 'Supplies protein ingredients to food brands.' },
@@ -269,7 +269,7 @@ export const COMPANIES: Company[] = [
     name: 'Routeflow',
     values: ['Sustainability', 'Data-driven decisions', 'Frugality'],
     stage: 'seed',
-    raise: 't-2m-5m',
+    raise: [2000, 5000],
     keywords: [
       { id: 'mobility', reason: 'Software for delivery-fleet operations.' },
       { id: 'climate', reason: 'Speeds up fleet electrification.' },
@@ -295,7 +295,7 @@ export const COMPANIES: Company[] = [
     name: 'Learnloop',
     values: ['Customer obsession', 'Diversity & inclusion', 'Craftsmanship'],
     stage: 'pre-seed',
-    raise: 't-500k-2m',
+    raise: [500, 2000],
     keywords: [
       { id: 'edtech', reason: 'Exam preparation for vocational training.' },
       { id: 'ai-ml', reason: 'An AI tutor explains mistakes and adapts quizzes.' },

@@ -1,5 +1,5 @@
-import { VALUE_OPTIONS } from '../../shared/questions';
-import { isStageId, isTicketId } from '../../shared/taxonomy';
+import { VALUE_OPTIONS, parseRange } from '../../shared/questions';
+import { isStageId } from '../../shared/taxonomy';
 import type { AnswerValue, Company, Profile } from '../../shared/types';
 
 const text = (value: AnswerValue | undefined) => (typeof value === 'string' ? value.trim() : '');
@@ -19,7 +19,7 @@ export function companyFromFounderProfile(profile: Profile): Company {
     name: text(a.companyName) || 'Your company',
     values,
     stage: isStageId(a.stage) ? a.stage : 'pre-seed',
-    raise: isTicketId(a.raise) ? a.raise : 't-under-500k',
+    raise: parseRange(a.raise) ?? [0, 100000],
     keywords: profile.keywords.map(({ id, reason }) => ({ id, reason })),
     problem: text(a.problem),
     solution: text(a.solution),

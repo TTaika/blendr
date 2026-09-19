@@ -8,7 +8,7 @@ const company = (overrides: Partial<Company> = {}): Company => ({
   name: 'Acme',
   values: ['Customer trust', 'Fast execution', 'Simple pricing'],
   stage: 'seed',
-  raise: 't-2m-5m',
+  raise: [2000, 5000],
   keywords: [
     { id: 'fintech', reason: 'r' },
     { id: 'ai-ml', reason: 'r' },
@@ -46,14 +46,12 @@ describe('scoreCompany', () => {
     expect(scoreCompany(none, company()).score).toBe(0);
   });
 
-  it('applies ticket fit when the investor range overlaps the bucket', () => {
-    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: 't-2m-5m' })).score).toBe(15);
-    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: 't-5m-15m' })).score).toBe(15);
-    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: 't-500k-2m' })).score).toBe(0);
-    expect(scoreCompany({ ...none, ticketRange: [500, 500] }, company({ raise: 't-500k-2m' })).score).toBe(15);
-    expect(scoreCompany({ ...none, ticketRange: [0, 100] }, company({ raise: 't-under-500k' })).score).toBe(15);
-    expect(scoreCompany({ ...none, ticketRange: [50000, 100000] }, company({ raise: 't-15m-plus' })).score).toBe(15);
-    expect(scoreCompany({ ...none, ticketRange: null }, company({ raise: 't-2m-5m' })).score).toBe(0);
+  it('applies ticket fit when the investor range and the raise range overlap as closed ranges', () => {
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [2000, 5000] })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: [5000, 10000] })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [100, 250] }, company({ raise: [500, 2000] })).score).toBe(0);
+    expect(scoreCompany({ ...none, ticketRange: [50000, 100000] }, company({ raise: [25000, 50000] })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: null }, company({ raise: [2000, 5000] })).score).toBe(0);
   });
 
   it('caps sector points at 30', () => {
@@ -70,9 +68,9 @@ describe('scoreCompany', () => {
 describe('rankFeed', () => {
   it('sorts by score, then by name', () => {
     const feed = rankFeed({ stages: ['seed'], ticketRange: [2000, 5000], keywordIds: [] }, [
-      company({ id: 'b', name: 'Beta', stage: 'series-a', raise: 't-5m-15m' }),
+      company({ id: 'b', name: 'Beta', stage: 'series-a', raise: [5000, 10000] }),
       company({ id: 'high', name: 'Zeta' }),
-      company({ id: 'a', name: 'Alpha', stage: 'series-a', raise: 't-5m-15m' }),
+      company({ id: 'a', name: 'Alpha', stage: 'series-a', raise: [5000, 10000] }),
     ]);
     expect(feed.map((e) => e.companyId)).toEqual(['high', 'a', 'b']);
     expect(feed[0]).toEqual({ companyId: 'high', score: 40, matched: [] });
