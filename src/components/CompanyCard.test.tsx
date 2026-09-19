@@ -22,6 +22,11 @@ describe('CompanyCard', () => {
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
   });
 
+  it('shows no scroll hint', () => {
+    render(<CompanyCard company={northlight} />);
+    expect(screen.queryByText(/Scroll for more/)).not.toBeInTheDocument();
+  });
+
   it('shows the top 4 keywords with matched ones first', () => {
     const { container } = render(<CompanyCard company={northlight} matched={['nordics', 'technical']} />);
     expect(chipLabels(container)).toEqual(['✓ Nordics', '✓ Technical depth', 'Climate & energy', 'B2B SaaS']);

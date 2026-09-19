@@ -89,7 +89,6 @@ p { margin: 0; }
 .card-head { display: flex; flex-direction: column; gap: 12px; }
 .card-values { font-size: 1.1rem; }
 .card-meta { font-size: 0.9rem; }
-.card-more { font-size: 0.8rem; text-align: center; }
 .match { background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .card-details { display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
 .numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 0; }

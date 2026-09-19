@@ -38,9 +38,6 @@ export function CompanyCard({ company, score, matched = [], showContact = false,
           {stageLabel(company.stage)} · raising {ticketLabel(company.raise)}
         </p>
         <KeywordList keywords={keywords} matchedIds={matched} />
-        <p className="card-more muted" aria-hidden="true">
-          Scroll for more ↓
-        </p>
       </header>
 
       <section className="card-details">
