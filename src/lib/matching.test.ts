@@ -28,13 +28,13 @@ const company = (overrides: Partial<Company> = {}): Company => ({
   ...overrides,
 });
 
-const none: InvestorCriteria = { stages: [], tickets: [], keywordIds: [] };
+const none: InvestorCriteria = { stages: [], ticketRange: null, keywordIds: [] };
 
 describe('scoreCompany', () => {
   it('scores a perfect match as 100', () => {
     const criteria: InvestorCriteria = {
       stages: ['seed'],
-      tickets: ['t-2m-5m'],
+      ticketRange: [2000, 5000],
       keywordIds: ['fintech', 'ai-ml', 'b2b', 'nordics', 'hands-on', 'data-driven', 'technical'],
     };
     expect(scoreCompany(criteria, company()).score).toBe(100);
@@ -42,8 +42,18 @@ describe('scoreCompany', () => {
 
   it('gives 25 for stage fit and 15 for ticket fit', () => {
     expect(scoreCompany({ ...none, stages: ['seed'] }, company()).score).toBe(25);
-    expect(scoreCompany({ ...none, tickets: ['t-2m-5m'] }, company()).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company()).score).toBe(15);
     expect(scoreCompany(none, company()).score).toBe(0);
+  });
+
+  it('applies ticket fit when the investor range overlaps the bucket', () => {
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: 't-2m-5m' })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: 't-5m-15m' })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [2000, 5000] }, company({ raise: 't-500k-2m' })).score).toBe(0);
+    expect(scoreCompany({ ...none, ticketRange: [500, 500] }, company({ raise: 't-500k-2m' })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [0, 100] }, company({ raise: 't-under-500k' })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: [50000, 100000] }, company({ raise: 't-15m-plus' })).score).toBe(15);
+    expect(scoreCompany({ ...none, ticketRange: null }, company({ raise: 't-2m-5m' })).score).toBe(0);
   });
 
   it('caps sector points at 30', () => {
@@ -59,7 +69,7 @@ describe('scoreCompany', () => {
 
 describe('rankFeed', () => {
   it('sorts by score, then by name', () => {
-    const feed = rankFeed({ stages: ['seed'], tickets: ['t-2m-5m'], keywordIds: [] }, [
+    const feed = rankFeed({ stages: ['seed'], ticketRange: [2000, 5000], keywordIds: [] }, [
       company({ id: 'b', name: 'Beta', stage: 'series-a', raise: 't-5m-15m' }),
       company({ id: 'high', name: 'Zeta' }),
       company({ id: 'a', name: 'Alpha', stage: 'series-a', raise: 't-5m-15m' }),
@@ -70,7 +80,7 @@ describe('rankFeed', () => {
 
   it('puts Northlight Grid first for a Nordic climate seed investor', () => {
     const feed = rankFeed(
-      { stages: ['seed'], tickets: ['t-2m-5m'], keywordIds: ['climate', 'usage-based', 'nordics', 'hands-on', 'technical'] },
+      { stages: ['seed'], ticketRange: [2000, 5000], keywordIds: ['climate', 'usage-based', 'nordics', 'hands-on', 'technical'] },
       COMPANIES,
     );
     expect(feed[0]).toEqual({
@@ -104,14 +114,33 @@ describe('topKeywords', () => {
 });
 
 describe('criteriaFromProfile', () => {
-  it('reads stages, tickets and keyword ids', () => {
+  it('reads stages, ticket range and keyword ids', () => {
     expect(
       criteriaFromProfile({
         role: 'investor',
-        answers: { stages: ['seed', 'series-a'], tickets: 't-2m-5m' },
+        answers: { stages: ['seed', 'series-a'], tickets: ['2000', '5000'] },
         summary: '',
         keywords: [{ id: 'fintech', reason: 'r', source: 'ai' }],
       }),
-    ).toEqual({ stages: ['seed', 'series-a'], tickets: ['t-2m-5m'], keywordIds: ['fintech'] });
+    ).toEqual({ stages: ['seed', 'series-a'], ticketRange: [2000, 5000], keywordIds: ['fintech'] });
+  });
+
+  it('gives a null ticket range for a missing or legacy answer', () => {
+    expect(
+      criteriaFromProfile({
+        role: 'investor',
+        answers: { stages: ['seed'] },
+        summary: '',
+        keywords: [],
+      }).ticketRange,
+    ).toBeNull();
+    expect(
+      criteriaFromProfile({
+        role: 'investor',
+        answers: { stages: ['seed'], tickets: 't-2m-5m' },
+        summary: '',
+        keywords: [],
+      }).ticketRange,
+    ).toBeNull();
   });
 });

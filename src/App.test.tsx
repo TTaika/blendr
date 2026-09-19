@@ -13,7 +13,7 @@ const investorAnswers: Answers = {
   investorName: 'Sara Lind',
   fundName: 'Birch Ventures',
   stages: ['seed'],
-  tickets: ['t-2m-5m'],
+  tickets: ['2000', '5000'],
   thesis: 'Climate software for the energy transition.',
   regions: 'Nordics',
   involvement: 'hands-on',

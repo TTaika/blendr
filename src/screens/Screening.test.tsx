@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useState } from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Answers, KeywordResult, Role } from '../../shared/types';
@@ -225,5 +225,64 @@ describe('Screening', () => {
     screen.getByLabelText('Company name').focus();
     await user.keyboard('{Enter}');
     expect(screen.getByText('2 / 11')).toBeInTheDocument();
+  });
+});
+
+describe('Screening: investor ticket range slider', () => {
+  const baseAnswers: Answers = { investorName: 'Sara', fundName: 'Birch', stages: ['seed'] };
+
+  async function goToTickets(user: UserEvent) {
+    await user.click(screen.getByRole('button', { name: 'Next' })); // investorName -> fundName
+    await user.click(screen.getByRole('button', { name: 'Next' })); // fundName -> stages
+    await user.click(screen.getByRole('button', { name: 'Next' })); // stages -> tickets
+  }
+
+  it('shows two labelled sliders and defaults to the full range when unanswered', async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(
+      <Screening role="investor" answers={baseAnswers} onAnswer={onAnswer} onGenerated={vi.fn()} onManual={vi.fn()} generate={vi.fn(async () => result)} />,
+    );
+    await goToTickets(user);
+    expect(screen.getByLabelText('Minimum ticket')).toBeInTheDocument();
+    expect(screen.getByLabelText('Maximum ticket')).toBeInTheDocument();
+    expect(onAnswer).toHaveBeenLastCalledWith('tickets', ['0', '100000']);
+  });
+
+  it('shows the formatted range and clamps the minimum handle to the maximum', async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(
+      <Screening
+        role="investor"
+        answers={{ ...baseAnswers, tickets: ['500', '5000'] }}
+        onAnswer={onAnswer}
+        onGenerated={vi.fn()}
+        onManual={vi.fn()}
+        generate={vi.fn(async () => result)}
+      />,
+    );
+    await goToTickets(user);
+    expect(screen.getByText('€500k – €5M')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Minimum ticket'), { target: { value: '6' } });
+    expect(onAnswer).toHaveBeenLastCalledWith('tickets', ['5000', '5000']);
+  });
+
+  it("can't push the maximum handle below the minimum", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(
+      <Screening
+        role="investor"
+        answers={{ ...baseAnswers, tickets: ['500', '5000'] }}
+        onAnswer={onAnswer}
+        onGenerated={vi.fn()}
+        onManual={vi.fn()}
+        generate={vi.fn(async () => result)}
+      />,
+    );
+    await goToTickets(user);
+    fireEvent.change(screen.getByLabelText('Maximum ticket'), { target: { value: '0' } });
+    expect(onAnswer).toHaveBeenLastCalledWith('tickets', ['500', '500']);
   });
 });

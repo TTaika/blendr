@@ -1,10 +1,15 @@
 import { STAGES, TICKETS } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi';
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'range';
 
 export interface QuestionOption {
   id: string;
+  label: string;
+}
+
+export interface QuestionStop {
+  value: number;
   label: string;
 }
 
@@ -17,6 +22,37 @@ export interface Question {
   maxLength?: number;
   maxSelections?: number;
   options?: QuestionOption[];
+  stops?: QuestionStop[];
+}
+
+// Values are in € thousands.
+export const TICKET_STOPS: QuestionStop[] = [
+  { value: 0, label: 'Under €100k' },
+  { value: 100, label: '€100k' },
+  { value: 250, label: '€250k' },
+  { value: 500, label: '€500k' },
+  { value: 1000, label: '€1M' },
+  { value: 2000, label: '€2M' },
+  { value: 5000, label: '€5M' },
+  { value: 10000, label: '€10M' },
+  { value: 25000, label: '€25M' },
+  { value: 50000, label: '€50M' },
+  { value: 100000, label: '€100M+' },
+];
+
+const TICKET_STOP_VALUES = new Set(TICKET_STOPS.map((s) => s.value));
+
+/** Parses a range answer `[min, max]` (stop values as strings). Returns null unless valid. */
+export function parseRange(value: AnswerValue | undefined): [number, number] | null {
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  const [minStr, maxStr] = value;
+  if (minStr.trim() === '' || maxStr.trim() === '') return null;
+  const min = Number(minStr);
+  const max = Number(maxStr);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+  if (!TICKET_STOP_VALUES.has(min) || !TICKET_STOP_VALUES.has(max)) return null;
+  if (min > max) return null;
+  return [min, max];
 }
 
 // Option ids are taxonomy keyword ids, so the chosen answer maps straight to a keyword.
@@ -62,7 +98,7 @@ export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'investorName', label: 'Your name', kind: 'text', required: true, maxLength: 60 },
   { id: 'fundName', label: 'Fund or firm', kind: 'text', required: true, maxLength: 60 },
   { id: 'stages', label: 'Which stages do you invest in?', kind: 'multi', required: true, options: [...STAGES] },
-  { id: 'tickets', label: 'What ticket sizes can you provide?', kind: 'multi', required: true, options: [...TICKETS] },
+  { id: 'tickets', label: 'What ticket sizes can you provide?', help: 'Drag both ends to set your range.', kind: 'range', required: true, stops: TICKET_STOPS },
   { id: 'thesis', label: 'Describe your investment thesis', help: 'Sectors, business models, what excites you', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'regions', label: 'Which regions do you invest in?', kind: 'text', required: true, maxLength: 120 },
   { id: 'involvement', label: 'How involved are you after investing?', kind: 'single', required: true, options: INVOLVEMENT_OPTIONS },
@@ -82,12 +118,23 @@ function isEmpty(value: AnswerValue | undefined): boolean {
 export function missingRequired(role: Role, answers: Answers): Question[] {
   return questionsFor(role).filter((q) => {
     if (!q.required) return false;
+    if (q.kind === 'range') return parseRange(answers[q.id]) === null;
     return isEmpty(answers[q.id]);
   });
 }
 
+function stopLabel(question: Question, value: number): string {
+  return question.stops?.find((s) => s.value === value)?.label ?? String(value);
+}
+
 export function formatAnswer(question: Question, value: AnswerValue | undefined): string {
   if (value === undefined) return '';
+  if (question.kind === 'range') {
+    const range = parseRange(value);
+    if (!range) return '';
+    const [min, max] = range;
+    return `${stopLabel(question, min)} – ${stopLabel(question, max)}`;
+  }
   const label = (id: string) => question.options?.find((o) => o.id === id)?.label ?? id;
   if (Array.isArray(value)) {
     if (question.options) return value.map(label).join(', ');

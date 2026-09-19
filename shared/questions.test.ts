@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, VALUE_OPTIONS, formatAnswer, missingRequired, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAnswer, missingRequired, parseRange, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
@@ -49,9 +49,54 @@ describe('questions', () => {
       investorName: 'Sara',
       fundName: '   ',
       stages: [],
-      tickets: ['t-2m-5m'],
+      tickets: ['500', '5000'],
     });
     expect(ids(missing)).toEqual(['fundName', 'stages', 'thesis', 'regions', 'involvement', 'founderFit', 'workStyle']);
+  });
+
+  it('treats a valid two-stop range as answered, and anything else as missing', () => {
+    const missingFor = (tickets: string[]) =>
+      missingRequired('investor', {
+        investorName: 'Sara',
+        fundName: 'Birch',
+        stages: ['seed'],
+        thesis: 'T',
+        regions: 'Nordics',
+        involvement: 'hands-on',
+        founderFit: 'F',
+        workStyle: 'W',
+        tickets,
+      }).map((q) => q.id);
+    expect(missingFor(['500', '5000'])).not.toContain('tickets');
+    expect(missingFor([])).toContain('tickets');
+    expect(missingFor(['500'])).toContain('tickets');
+    expect(missingFor(['t-2m-5m'])).toContain('tickets');
+  });
+
+  it('has 11 ticket stops from under €100k to €100M+', () => {
+    const tickets = INVESTOR_QUESTIONS.find((q) => q.id === 'tickets')!;
+    expect(tickets.kind).toBe('range');
+    expect(tickets.stops).toBe(TICKET_STOPS);
+    expect(TICKET_STOPS).toHaveLength(11);
+    expect(TICKET_STOPS[0]).toEqual({ value: 0, label: 'Under €100k' });
+    expect(TICKET_STOPS[TICKET_STOPS.length - 1]).toEqual({ value: 100000, label: '€100M+' });
+  });
+
+  it('parseRange rejects malformed values, including min > max', () => {
+    expect(parseRange(['500', '5000'])).toEqual([500, 5000]);
+    expect(parseRange(['5000', '500'])).toBeNull();
+    expect(parseRange(undefined)).toBeNull();
+    expect(parseRange([])).toBeNull();
+    expect(parseRange(['500'])).toBeNull();
+    expect(parseRange(['t-2m-5m'])).toBeNull();
+    expect(parseRange('500')).toBeNull();
+  });
+
+  it('formats a range answer with stop labels', () => {
+    const tickets = INVESTOR_QUESTIONS.find((q) => q.id === 'tickets')!;
+    expect(formatAnswer(tickets, ['500', '5000'])).toBe('€500k – €5M');
+    expect(formatAnswer(tickets, ['5000', '500'])).toBe('');
+    expect(formatAnswer(tickets, [])).toBe('');
   });
 
   it('formats answers with option labels', () => {

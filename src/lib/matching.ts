@@ -1,9 +1,10 @@
-import { getKeyword, type KeywordCategory } from '../../shared/taxonomy';
+import { parseRange } from '../../shared/questions';
+import { TICKET_RANGES, getKeyword, type KeywordCategory } from '../../shared/taxonomy';
 import type { AnswerValue, Company, FeedEntry, Profile } from '../../shared/types';
 
 export interface InvestorCriteria {
   stages: string[];
-  tickets: string[];
+  ticketRange: [number, number] | null;
   keywordIds: string[];
 }
 
@@ -30,15 +31,23 @@ function asList(value: AnswerValue | undefined): string[] {
 export function criteriaFromProfile(profile: Profile): InvestorCriteria {
   return {
     stages: asList(profile.answers.stages),
-    tickets: asList(profile.answers.tickets),
+    ticketRange: parseRange(profile.answers.tickets),
     keywordIds: profile.keywords.map((k) => k.id),
   };
+}
+
+function ticketFits(ticketRange: [number, number] | null, raise: Company['raise']): boolean {
+  if (!ticketRange) return false;
+  const [invMin, invMaxRaw] = ticketRange;
+  const invMax = invMaxRaw >= 100000 ? Infinity : invMaxRaw;
+  const [bucketMin, bucketMax] = TICKET_RANGES[raise];
+  return invMin < bucketMax && invMax >= bucketMin;
 }
 
 export function scoreCompany(criteria: InvestorCriteria, company: Company): MatchResult {
   let score = 0;
   if (criteria.stages.includes(company.stage)) score += STAGE_POINTS;
-  if (criteria.tickets.includes(company.raise)) score += TICKET_POINTS;
+  if (ticketFits(criteria.ticketRange, company.raise)) score += TICKET_POINTS;
 
   const wanted = new Set(criteria.keywordIds);
   const matched = company.keywords.map((k) => k.id).filter((id) => wanted.has(id));

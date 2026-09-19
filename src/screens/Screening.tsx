@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { missingRequired, questionsFor, type Question } from '../../shared/questions';
+import { useEffect, useState } from 'react';
+import { missingRequired, parseRange, questionsFor, type Question } from '../../shared/questions';
 import type { AnswerValue, Answers, KeywordResult, Role } from '../../shared/types';
 import { requestKeywords, type RequestKeywords } from '../lib/api';
 
@@ -136,6 +136,10 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
   const id = `q-${q.id}`;
   const label = q.required ? q.label : `${q.label} (optional)`;
 
+  if (q.kind === 'range') {
+    return <RangeField question={q} value={value} invalid={invalid} onChange={onChange} />;
+  }
+
   if (q.kind === 'single' || q.kind === 'multi') {
     const selected = Array.isArray(value) ? value : value ? [value] : [];
     const max = q.kind === 'multi' ? q.maxSelections : undefined;
@@ -198,5 +202,65 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
         </p>
       )}
     </div>
+  );
+}
+
+function RangeField({ question: q, value, invalid, onChange }: FieldProps) {
+  const label = q.required ? q.label : `${q.label} (optional)`;
+  const stops = q.stops ?? [];
+  const lastIdx = stops.length - 1;
+  const range = parseRange(value);
+  const minIdx = range ? stops.findIndex((s) => s.value === range[0]) : 0;
+  const maxIdx = range ? stops.findIndex((s) => s.value === range[1]) : lastIdx;
+
+  // An untouched (or invalid/legacy) slider still counts as answered: default to the full range.
+  useEffect(() => {
+    if (!range) {
+      onChange([String(stops[0].value), String(stops[lastIdx].value)]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function report(nextMinIdx: number, nextMaxIdx: number) {
+    onChange([String(stops[nextMinIdx].value), String(stops[nextMaxIdx].value)]);
+  }
+
+  const minPct = lastIdx === 0 ? 0 : (minIdx / lastIdx) * 100;
+  const maxPct = lastIdx === 0 ? 100 : (maxIdx / lastIdx) * 100;
+
+  return (
+    <fieldset className="field" aria-invalid={invalid || undefined}>
+      <legend>{label}</legend>
+      {q.help && <p className="help">{q.help}</p>}
+      <p className="range-value">
+        {stops[minIdx]?.label} – {stops[maxIdx]?.label}
+      </p>
+      <div className="range">
+        <div className="range-track" />
+        <div className="range-fill" style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }} />
+        <input
+          type="range"
+          min={0}
+          max={lastIdx}
+          step={1}
+          value={minIdx}
+          aria-label="Minimum ticket"
+          aria-valuetext={stops[minIdx]?.label}
+          aria-invalid={invalid || undefined}
+          onChange={(e) => report(Math.min(Number(e.target.value), maxIdx), maxIdx)}
+        />
+        <input
+          type="range"
+          min={0}
+          max={lastIdx}
+          step={1}
+          value={maxIdx}
+          aria-label="Maximum ticket"
+          aria-valuetext={stops[maxIdx]?.label}
+          aria-invalid={invalid || undefined}
+          onChange={(e) => report(minIdx, Math.max(Number(e.target.value), minIdx))}
+        />
+      </div>
+    </fieldset>
   );
 }
