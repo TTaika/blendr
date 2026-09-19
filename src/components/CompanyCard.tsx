@@ -7,7 +7,6 @@ import { KeywordList } from './KeywordList';
 
 export interface CompanyCardProps {
   company: Company;
-  score?: number;
   matched?: string[];
   showContact?: boolean;
   allKeywords?: boolean;
@@ -23,7 +22,7 @@ function Detail({ title, text }: { title: string; text: string }) {
   );
 }
 
-export function CompanyCard({ company, score, matched = [], showContact = false, allKeywords = false }: CompanyCardProps) {
+export function CompanyCard({ company, matched = [], showContact = false, allKeywords = false }: CompanyCardProps) {
   const keywords = topKeywords(company, matched, allKeywords ? company.keywords.length : 4);
   const { contact } = company;
 
@@ -32,8 +31,6 @@ export function CompanyCard({ company, score, matched = [], showContact = false,
       <header className="card-head">
         <div className="row">
           <h2>{company.name}</h2>
-          <span className="spacer" />
-          {score !== undefined && <span className="match">{score}% match</span>}
         </div>
         <p className="card-values">
           {company.values.map((value, i) => (

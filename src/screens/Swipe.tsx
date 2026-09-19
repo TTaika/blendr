@@ -92,7 +92,7 @@ export function Swipe({
       burstTimerRef.current = window.setTimeout(() => {
         burstTimerRef.current = null;
         setBurst(null);
-      }, 900);
+      }, 2000);
     }
     const finish = () => {
       animRef.current = null;
@@ -200,7 +200,7 @@ export function Swipe({
                 }}
               >
                 <div className="swipe-scroll">
-                  <CompanyCard company={nextCompany} score={next.score} matched={next.matched} />
+                  <CompanyCard company={nextCompany} matched={next.matched} />
                 </div>
               </div>
             )}
@@ -218,7 +218,7 @@ export function Swipe({
               onPointerCancel={onPointerCancel}
             >
               <div className="swipe-scroll">
-                <CompanyCard company={company} score={top.score} matched={top.matched} />
+                <CompanyCard company={company} matched={top.matched} />
               </div>
               <span className="stamp stamp-like" aria-hidden="true" style={{ opacity: stampOpacity(1) }}>
                 MATCH

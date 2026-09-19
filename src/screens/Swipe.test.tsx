@@ -57,11 +57,11 @@ describe('Swipe', () => {
     expect(deck.querySelectorAll(':scope > .stamp')).toHaveLength(0);
   });
 
-  it('shows only the top company with its match score', () => {
+  it('shows only the top company, with no match percentage', () => {
     setup();
     expect(screen.getByText('Ranked for Birch Ventures')).toBeInTheDocument();
     expect(screen.getByRole('article', { name: fixtureCompany.name })).toBeInTheDocument();
-    expect(screen.getByText('80% match')).toBeInTheDocument();
+    expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
     expect(screen.queryByRole('article', { name: fixtureCompany2.name })).not.toBeInTheDocument();
   });
 
@@ -75,14 +75,14 @@ describe('Swipe', () => {
     unmount();
   });
 
-  it('shows a match burst on like, naming the company, that disappears after 900ms', async () => {
+  it('shows a match burst on like, naming the company, that disappears after about 2s', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Like' }));
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('MATCH');
     expect(status).toHaveTextContent(`with ${fixtureCompany.name}`);
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument(), { timeout: 1500 });
-  });
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument(), { timeout: 3000 });
+  }, 6000);
 
   it('likes and passes with the buttons', async () => {
     const { user, onLike, onDiscard } = setup();

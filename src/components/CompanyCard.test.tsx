@@ -8,16 +8,15 @@ const chipLabels = (container: HTMLElement) =>
   [...container.querySelectorAll('.chip-label')].map((el) => el.textContent);
 
 describe('CompanyCard', () => {
-  it('shows name, values, stage, raise and match score', () => {
-    const { container } = render(<CompanyCard company={fixtureCompany} score={80} matched={['nordics']} />);
+  it('shows name, values, stage and raise', () => {
+    const { container } = render(<CompanyCard company={fixtureCompany} matched={['nordics']} />);
     expect(screen.getByRole('article', { name: 'Fixture Co' })).toBeInTheDocument();
     expect(container.querySelector('.card-values')).toHaveTextContent(fixtureCompany.values.join(' / '));
     expect(screen.getByText('Seed · raising €2.5M')).toBeInTheDocument();
-    expect(screen.getByText('80% match')).toBeInTheDocument();
   });
 
-  it('hides the match score in random mode', () => {
-    render(<CompanyCard company={fixtureCompany} />);
+  it('never shows a match percentage', () => {
+    render(<CompanyCard company={fixtureCompany} matched={['nordics']} />);
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
   });
 
