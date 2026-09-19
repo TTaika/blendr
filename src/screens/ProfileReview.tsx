@@ -24,27 +24,29 @@ export function ProfileReview({ profile, onAdd, onRemove, onEditAnswers, onSubmi
 
   return (
     <main className="screen">
-      <header>
-        <p className="muted">Review your profile</p>
-        <h1>{title}</h1>
-        {profile.summary && <p className="muted">{profile.summary}</p>}
-      </header>
-      <p>
-        These keywords decide who you are matched with. Tap a keyword to see why it was chosen, remove the wrong ones
-        and add anything missing.
-      </p>
+      <section className="card profile-card" aria-label="Profile summary">
+        <header>
+          <p className="muted">Review your profile</p>
+          <h1>{title}</h1>
+          {profile.summary && <p className="muted">{profile.summary}</p>}
+        </header>
+        <p>
+          These keywords decide who you are matched with. Tap a keyword to see why it was chosen, remove the wrong ones
+          and add anything missing.
+        </p>
 
-      {profile.keywords.length === 0 && <p className="panel muted">No keywords yet. Add at least one below.</p>}
-      {CATEGORY_ORDER.map((category) => {
-        const inCategory = profile.keywords.filter((k) => getKeyword(k.id)?.category === category);
-        if (inCategory.length === 0) return null;
-        return (
-          <section key={category} aria-label={CATEGORY_LABELS[category]}>
-            <h3>{CATEGORY_LABELS[category]}</h3>
-            <KeywordList keywords={inCategory} onRemove={onRemove} />
-          </section>
-        );
-      })}
+        {profile.keywords.length === 0 && <p className="panel muted">No keywords yet. Add at least one below.</p>}
+        {CATEGORY_ORDER.map((category) => {
+          const inCategory = profile.keywords.filter((k) => getKeyword(k.id)?.category === category);
+          if (inCategory.length === 0) return null;
+          return (
+            <section key={category} aria-label={CATEGORY_LABELS[category]}>
+              <h3>{CATEGORY_LABELS[category]}</h3>
+              <KeywordList keywords={inCategory} onRemove={onRemove} />
+            </section>
+          );
+        })}
+      </section>
 
       <div className="panel add-keyword">
         <label htmlFor="add-keyword">Add a keyword</label>

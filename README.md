@@ -33,7 +33,7 @@ With a key set, the server also makes one test request to Gemini right after sta
 - **I'm an investor**: questionnaire → AI keywords (editable) → swipe feed ranked by match % → Connect
 - **Skip to swiping**: the test companies in random order
 
-Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for details, and tap a keyword to see why it was assigned. Every 5 likes you are asked whether to open Connect. **Reset demo** (bottom-left) clears this phone's data.
+Swipe right or tap ♥ to like; swipe left or tap ✕ to pass. Scroll a card for details, and tap a keyword to see why it was assigned. Every 5 likes you are asked whether to open Connect. **Start over** (bottom-left) clears this phone's data.
 
 ## Replacing the draft content
 
