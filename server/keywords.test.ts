@@ -13,7 +13,7 @@ const founderAnswers: Answers = {
   solution: 'We shift building loads.',
   traction: '€500k ARR',
   team: 'Two engineers.',
-  involvement: 'hands-on',
+  involvement: ['hands-on'],
   whyInvest: 'The market is exploding.',
   workStyle: 'Fast and data-driven.',
 };
@@ -98,5 +98,47 @@ describe('generateKeywords', () => {
     expect(fetchWebsite).not.toHaveBeenCalled();
     expect(result.websiteUsed).toBe(false);
     expect(result.keywords).toEqual([{ id: 'hands-on', reason: 'Asked for sparring' }]);
+  });
+
+  it('appends every chosen involvement keyword the model missed, one per chosen option', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () => JSON.stringify({ summary: 's', keywords: [{ id: 'climate', reason: 'Grid' }] }));
+    const result = await generateKeywords(
+      'founder',
+      { ...founderAnswers, website: '', involvement: ['hands-on', 'network-access'] },
+      { model, fetchWebsite },
+    );
+    expect(result.keywords).toEqual([
+      { id: 'climate', reason: 'Grid' },
+      { id: 'hands-on', reason: 'You chose this in the questionnaire.' },
+      { id: 'network-access', reason: 'You chose this in the questionnaire.' },
+    ]);
+  });
+
+  it('does not duplicate a chosen involvement id the model already returned', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () =>
+      JSON.stringify({ summary: 's', keywords: [{ id: 'hands-on', reason: 'Asked for sparring' }] }),
+    );
+    const result = await generateKeywords(
+      'founder',
+      { ...founderAnswers, website: '', involvement: ['hands-on', 'network-access'] },
+      { model, fetchWebsite },
+    );
+    expect(result.keywords).toEqual([
+      { id: 'hands-on', reason: 'Asked for sparring' },
+      { id: 'network-access', reason: 'You chose this in the questionnaire.' },
+    ]);
+  });
+
+  it('still accepts a legacy string involvement answer', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () => JSON.stringify({ summary: 's', keywords: [] }));
+    const result = await generateKeywords(
+      'founder',
+      { ...founderAnswers, website: '', involvement: 'hands-on' },
+      { model, fetchWebsite },
+    );
+    expect(result.keywords).toEqual([{ id: 'hands-on', reason: 'You chose this in the questionnaire.' }]);
   });
 });

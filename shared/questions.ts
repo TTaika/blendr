@@ -109,7 +109,7 @@ export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'solution', label: 'How do you solve it?', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'traction', label: 'Key numbers and growth', help: 'e.g. ARR, month-on-month growth, users, pilots', kind: 'longtext', required: true, maxLength: 300 },
   { id: 'team', label: 'Your team and experience', kind: 'longtext', required: true, maxLength: 400 },
-  { id: 'involvement', label: 'What kind of investor involvement do you want?', kind: 'single', required: true, options: INVOLVEMENT_OPTIONS },
+  { id: 'involvement', label: 'What kind of investor involvement do you want?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'whyInvest', label: 'Why should an investor invest in you now?', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'workStyle', label: 'How would your co-founders describe the way you work?', help: 'Used to match personalities.', kind: 'longtext', required: true, maxLength: 300 },
 ];
@@ -121,7 +121,7 @@ export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'tickets', label: 'What ticket sizes can you provide?', help: 'Drag both ends to set your range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum ticket', 'Maximum ticket'] },
   { id: 'thesis', label: 'Describe your investment thesis', help: 'Sectors, business models, what excites you', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'regions', label: 'Which regions do you invest in?', kind: 'text', required: true, maxLength: 120 },
-  { id: 'involvement', label: 'How involved are you after investing?', kind: 'single', required: true, options: INVOLVEMENT_OPTIONS },
+  { id: 'involvement', label: 'How involved are you after investing?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'founderFit', label: 'What makes you say yes to a founder?', kind: 'longtext', required: true, maxLength: 300 },
   { id: 'workStyle', label: 'How would founders you have backed describe working with you?', help: 'Used to match personalities.', kind: 'longtext', required: true, maxLength: 300 },
 ];

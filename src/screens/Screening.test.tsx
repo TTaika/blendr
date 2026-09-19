@@ -15,7 +15,7 @@ const founderAnswers: Answers = {
   solution: 'S',
   traction: 'T',
   team: 'Team',
-  involvement: 'hands-on',
+  involvement: ['hands-on'],
   whyInvest: 'W',
   workStyle: 'Fast',
 };
@@ -154,6 +154,36 @@ describe('Screening', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByLabelText('Transparency'));
     expect(onAnswer).toHaveBeenLastCalledWith('values', ['transparency']);
+  });
+
+  it('reports an array with both when two founder involvement options are picked, and removes one clicked again', async () => {
+    const user = userEvent.setup();
+    render(
+      <Controlled
+        role="founder"
+        initial={{
+          companyName: 'Acme',
+          values: ['transparency', 'speed', 'integrity'],
+          stage: 'seed',
+          raise: ['2000', '5000'],
+          problem: 'P',
+          solution: 'S',
+          traction: 'T',
+          team: 'Team',
+        }}
+      />,
+    );
+    for (let i = 0; i < 8; i++) {
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+    }
+    expect(screen.getByRole('group', { name: 'What kind of investor involvement do you want?' })).toBeInTheDocument();
+    await user.click(screen.getByLabelText('Hands-on: weekly sparring and operational help'));
+    await user.click(screen.getByLabelText('Network: intros to customers, hires and investors'));
+    expect(screen.getByLabelText('Hands-on: weekly sparring and operational help')).toBeChecked();
+    expect(screen.getByLabelText('Network: intros to customers, hires and investors')).toBeChecked();
+    await user.click(screen.getByLabelText('Hands-on: weekly sparring and operational help'));
+    expect(screen.getByLabelText('Hands-on: weekly sparring and operational help')).not.toBeChecked();
+    expect(screen.getByLabelText('Network: intros to customers, hires and investors')).toBeChecked();
   });
 
   it('toggles multi-choice options for the investor stages question', async () => {

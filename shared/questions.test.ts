@@ -39,6 +39,14 @@ describe('questions', () => {
     }
   });
 
+  it('makes both involvement questions multiple choice', () => {
+    for (const q of [FOUNDER_QUESTIONS, INVESTOR_QUESTIONS].map((qs) => qs.find((x) => x.id === 'involvement')!)) {
+      expect(q.kind).toBe('multi');
+      expect(q.required).toBe(true);
+      expect(q.maxSelections).toBeUndefined();
+    }
+  });
+
   it('returns the questions for a role', () => {
     expect(questionsFor('founder')).toBe(FOUNDER_QUESTIONS);
     expect(questionsFor('investor')).toBe(INVESTOR_QUESTIONS);
