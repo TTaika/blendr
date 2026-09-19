@@ -195,7 +195,7 @@ export function Swipe({
                 aria-hidden="true"
                 inert
                 style={{
-                  transform: `translateY(${14 * (1 - p)}px) scale(${0.94 + 0.06 * p})`,
+                  transform: `scale(${0.94 + 0.06 * p})`,
                   opacity: 0.55 + 0.45 * p,
                   transition: dragging ? 'none' : `transform ${exitMs}ms ${EXIT_EASING}, opacity ${exitMs}ms ${EXIT_EASING}`,
                 }}

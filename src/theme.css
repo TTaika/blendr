@@ -60,6 +60,7 @@ p { margin: 0; }
   min-height: 48px;
   box-shadow: 4px 4px 0 0 var(--accent);
   transition: transform 80ms ease, box-shadow 80ms ease;
+  white-space: nowrap;
 }
 @media (hover: hover) {
   .btn:hover { box-shadow: 6px 6px 0 0 var(--accent); }
@@ -452,7 +453,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  transform-origin: center bottom;
+  transform-origin: center center; /* shrinks inside the top card: no sliver peeks out */
   animation: under-in 200ms ease;
 }
 @keyframes under-in {
