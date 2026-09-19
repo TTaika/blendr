@@ -7,7 +7,14 @@ import { FounderPreview } from './FounderPreview';
 
 const profile: Profile = {
   role: 'founder',
-  answers: { companyName: 'Acme', values: ['transparency', 'speed', 'integrity'], stage: 'seed', raise: ['500', '2000'] },
+  answers: {
+    companyName: 'Acme',
+    values: ['transparency', 'speed', 'integrity'],
+    stage: 'seed',
+    raise: ['500', '2000'],
+    contactName: 'Ada Lovelace',
+    contactEmail: 'ada@acme.example',
+  },
   summary: '',
   keywords: [
     { id: 'fintech', reason: 'Payments', source: 'ai' },
@@ -26,6 +33,12 @@ describe('FounderPreview', () => {
     expect(container.querySelector('.card-values')).toHaveTextContent('Transparency / Speed of execution / Integrity');
     expect(container.querySelectorAll('.chip-label')).toHaveLength(5);
     expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
+  });
+
+  it('shows the contact name and a mailto link, like the card investors see', () => {
+    render(<FounderPreview profile={profile} onStartOver={vi.fn()} />);
+    expect(screen.getByText('Ada Lovelace · Point of contact')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'ada@acme.example' })).toHaveAttribute('href', 'mailto:ada@acme.example');
   });
 
   it('has no demo note', () => {

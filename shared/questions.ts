@@ -1,7 +1,7 @@
 import { STAGES, TAXONOMY } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
-export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'range' | 'scale';
+export type QuestionKind = 'text' | 'longtext' | 'url' | 'email' | 'single' | 'multi' | 'range' | 'scale';
 
 export interface QuestionOption {
   id: string;
@@ -32,6 +32,10 @@ export interface Question {
   stops?: QuestionStop[];
   rangeLabels?: [string, string];
   scale?: QuestionScale;
+  /** Consecutive questions sharing a page render together on one questionnaire step. */
+  page?: string;
+  /** When true, this question's answer is never sent to the AI (e.g. personal contact details). */
+  excludeFromAi?: boolean;
 }
 
 // Values are in € thousands.
@@ -138,7 +142,10 @@ export const PERSONALITY_OPTIONS: QuestionOption[] = TAXONOMY.filter((t) => t.ca
 }));
 
 export const FOUNDER_QUESTIONS: Question[] = [
-  { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60 },
+  { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60, page: 'basics' },
+  { id: 'website', label: 'Company website', help: 'Optional. We read it to suggest keywords.', kind: 'url', required: false, maxLength: 200, page: 'basics' },
+  { id: 'contactName', label: 'Point of contact', help: 'Who investors should reach out to.', kind: 'text', required: true, maxLength: 80, page: 'basics', excludeFromAi: true },
+  { id: 'contactEmail', label: 'Contact email', kind: 'email', required: true, maxLength: 120, page: 'basics', excludeFromAi: true },
   { id: 'values', label: "Choose your company's three main values", help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: VALUE_OPTIONS },
   { id: 'stage', label: 'Current funding stage', kind: 'single', required: true, options: [...STAGES] },
   { id: 'raise', label: 'How much are you raising?', help: 'Drag both ends to set the range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum raise', 'Maximum raise'] },
@@ -170,9 +177,32 @@ export function questionsFor(role: Role): Question[] {
   return role === 'founder' ? FOUNDER_QUESTIONS : INVESTOR_QUESTIONS;
 }
 
+/**
+ * Groups a role's questions into questionnaire steps: consecutive questions sharing the same
+ * `page` render together on one step, and any question without a `page` gets its own step.
+ */
+export function questionSteps(role: Role): Question[][] {
+  const steps: Question[][] = [];
+  for (const q of questionsFor(role)) {
+    const current = steps[steps.length - 1];
+    if (q.page !== undefined && current && current[0].page === q.page) {
+      current.push(q);
+    } else {
+      steps.push([q]);
+    }
+  }
+  return steps;
+}
+
 function isEmpty(value: AnswerValue | undefined): boolean {
   if (value === undefined) return true;
   return Array.isArray(value) ? value.length === 0 : value.trim() === '';
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(value: AnswerValue | undefined): boolean {
+  return typeof value === 'string' && EMAIL_RE.test(value.trim());
 }
 
 export function missingRequired(role: Role, answers: Answers): Question[] {
@@ -180,6 +210,7 @@ export function missingRequired(role: Role, answers: Answers): Question[] {
     if (!q.required) return false;
     if (q.kind === 'range') return parseRange(answers[q.id]) === null;
     if (q.kind === 'scale') return parseScale(q, answers[q.id]) === null;
+    if (q.kind === 'email') return !isValidEmail(answers[q.id]);
     return isEmpty(answers[q.id]);
   });
 }

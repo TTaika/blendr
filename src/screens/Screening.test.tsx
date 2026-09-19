@@ -8,6 +8,8 @@ import { Screening, type ScreeningProps } from './Screening';
 
 const founderAnswers: Answers = {
   companyName: 'Acme',
+  contactName: 'Ada Lovelace',
+  contactEmail: 'ada@acme.example',
   values: ['Payments trust', 'Baker-first support', 'Simple pricing'],
   stage: 'seed',
   raise: ['2000', '5000'],
@@ -57,18 +59,30 @@ async function goToLastStep(user: UserEvent) {
 }
 
 describe('Screening', () => {
-  it('shows only the first founder question, with progress 1 / 12', () => {
+  it('shows all four basics fields on the first founder step, with progress 1 / 12', () => {
     setup({ role: 'founder' });
     expect(screen.getByRole('heading', { name: 'Tell us about your startup' })).toBeInTheDocument();
     expect(screen.getByText('1 / 12')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toBeInTheDocument();
-    expect(screen.queryByLabelText(/website/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Company website (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Point of contact')).toBeInTheDocument();
+    expect(screen.getByLabelText('Contact email')).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: "Choose your company's three main values" })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Question progress' });
     expect(bar).toHaveAttribute('aria-valuemin', '1');
     expect(bar).toHaveAttribute('aria-valuemax', '12');
     expect(bar).toHaveAttribute('aria-valuenow', '1');
+  });
+
+  it('gives the contact email input type=email, inputMode=email and autoComplete=email', () => {
+    setup({ role: 'founder' });
+    expect(screen.getByLabelText('Contact email')).toHaveAttribute('type', 'email');
+    expect(screen.getByLabelText('Contact email')).toHaveAttribute('inputMode', 'email');
+    expect(screen.getByLabelText('Contact email')).toHaveAttribute('autoComplete', 'email');
+    expect(screen.getByLabelText('Company name')).toHaveAttribute('autoComplete', 'organization');
+    expect(screen.getByLabelText('Company website (optional)')).toHaveAttribute('autoComplete', 'url');
+    expect(screen.getByLabelText('Point of contact')).toHaveAttribute('autoComplete', 'name');
   });
 
   it('shows only the first investor question, with progress 1 / 11', () => {
@@ -81,18 +95,49 @@ describe('Screening', () => {
     expect(bar).toHaveAttribute('aria-valuemax', '11');
   });
 
-  it('blocks Next on an empty required question and shows an alert, staying on step 1', async () => {
+  it('blocks Next when every basics field is empty, showing "Please fill in the required fields." and staying on step 1', async () => {
     const { user } = setup({ role: 'founder' });
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Please answer this question to continue.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Please fill in the required fields.');
     expect(screen.getByText('1 / 12')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Point of contact')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Contact email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Company website (optional)')).not.toHaveAttribute('aria-invalid');
   });
 
-  it('advances to the next question once answered, and updates the progress bar', async () => {
+  it('Next with an empty required name shows "Please fill in the required fields." and stays on the step', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={{ contactName: 'Ada Lovelace', contactEmail: 'ada@acme.example' }} />);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Please fill in the required fields.');
+    expect(screen.getByText('1 / 12')).toBeInTheDocument();
+    expect(screen.getByLabelText('Company name')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Point of contact')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText('Contact email')).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('shows "Enter a valid email address." when a malformed email is the only invalid basics field', async () => {
+    const user = userEvent.setup();
+    render(
+      <Controlled
+        role="founder"
+        initial={{ companyName: 'Acme', contactName: 'Ada Lovelace', contactEmail: 'not-an-email' }}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address.');
+    expect(screen.getByText('1 / 12')).toBeInTheDocument();
+    expect(screen.getByLabelText('Contact email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Company name')).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('advances valid basics to the values step, and updates the progress bar', async () => {
     const user = userEvent.setup();
     render(<Controlled role="founder" />);
     await user.type(screen.getByLabelText('Company name'), 'Acme');
+    await user.type(screen.getByLabelText('Point of contact'), 'Ada Lovelace');
+    await user.type(screen.getByLabelText('Contact email'), 'ada@acme.example');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('2 / 12')).toBeInTheDocument();
     expect(screen.getByRole('group', { name: "Choose your company's three main values" })).toBeInTheDocument();
@@ -101,21 +146,22 @@ describe('Screening', () => {
     expect(bar).toHaveAttribute('aria-valuenow', '2');
   });
 
-  it('goes back to the previous question and keeps its value, clearing the error', async () => {
+  it('goes back to the previous step and keeps its values, clearing the error', async () => {
     const user = userEvent.setup();
-    render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
+    render(<Controlled role="founder" initial={{ companyName: 'Acme', contactName: 'Ada Lovelace', contactEmail: 'ada@acme.example' }} />);
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('2 / 12')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByText('1 / 12')).toBeInTheDocument();
     expect(screen.getByLabelText('Company name')).toHaveValue('Acme');
+    expect(screen.getByLabelText('Contact email')).toHaveValue('ada@acme.example');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
   });
 
   it('shows the values step as 13 checkbox options', async () => {
     const user = userEvent.setup();
-    render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
+    render(<Controlled role="founder" initial={{ companyName: 'Acme', contactName: 'Ada Lovelace', contactEmail: 'ada@acme.example' }} />);
     await user.click(screen.getByRole('button', { name: 'Next' }));
     const group = screen.getByRole('group', { name: "Choose your company's three main values" });
     expect(within(group).getAllByRole('checkbox')).toHaveLength(13);
@@ -127,7 +173,7 @@ describe('Screening', () => {
     render(
       <Controlled
         role="founder"
-        initial={{ companyName: 'Acme', values: ['transparency', 'speed', 'integrity'] }}
+        initial={{ companyName: 'Acme', contactName: 'Ada Lovelace', contactEmail: 'ada@acme.example', values: ['transparency', 'speed', 'integrity'] }}
       />,
     );
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -146,7 +192,7 @@ describe('Screening', () => {
     render(
       <Screening
         role="founder"
-        answers={{ companyName: 'Acme' }}
+        answers={{ companyName: 'Acme', contactName: 'Ada Lovelace', contactEmail: 'ada@acme.example' }}
         onAnswer={onAnswer}
         onGenerated={vi.fn()}
         onManual={vi.fn()}
@@ -165,6 +211,8 @@ describe('Screening', () => {
         role="founder"
         initial={{
           companyName: 'Acme',
+          contactName: 'Ada Lovelace',
+          contactEmail: 'ada@acme.example',
           values: ['transparency', 'speed', 'integrity'],
           stage: 'seed',
           raise: ['2000', '5000'],
@@ -252,7 +300,7 @@ describe('Screening', () => {
 
   it('submits the current step via Enter (form submit) like the primary button', async () => {
     const user = userEvent.setup();
-    render(<Controlled role="founder" initial={{ companyName: 'Acme' }} />);
+    render(<Controlled role="founder" initial={{ companyName: 'Acme', contactName: 'Ada Lovelace', contactEmail: 'ada@acme.example' }} />);
     screen.getByLabelText('Company name').focus();
     await user.keyboard('{Enter}');
     expect(screen.getByText('2 / 12')).toBeInTheDocument();
@@ -265,14 +313,20 @@ describe('Screening: founder raise range slider', () => {
     render(
       <Screening
         role="founder"
-        answers={{ companyName: 'Acme', values: ['transparency', 'speed', 'integrity'], stage: 'seed' }}
+        answers={{
+          companyName: 'Acme',
+          contactName: 'Ada Lovelace',
+          contactEmail: 'ada@acme.example',
+          values: ['transparency', 'speed', 'integrity'],
+          stage: 'seed',
+        }}
         onAnswer={vi.fn()}
         onGenerated={vi.fn()}
         onManual={vi.fn()}
         generate={vi.fn(async () => result)}
       />,
     );
-    await user.click(screen.getByRole('button', { name: 'Next' })); // companyName -> values
+    await user.click(screen.getByRole('button', { name: 'Next' })); // basics -> values
     await user.click(screen.getByRole('button', { name: 'Next' })); // values -> stage
     await user.click(screen.getByRole('button', { name: 'Next' })); // stage -> raise
     expect(screen.getByLabelText('Minimum raise')).toBeInTheDocument();
@@ -342,6 +396,8 @@ describe('Screening: investor ticket range slider', () => {
 describe('Screening: founder scale questions (pressure/transparency/leadership)', () => {
   const answeredThroughWhyInvest: Answers = {
     companyName: 'Acme',
+    contactName: 'Ada Lovelace',
+    contactEmail: 'ada@acme.example',
     values: ['transparency', 'speed', 'integrity'],
     stage: 'seed',
     raise: ['2000', '5000'],

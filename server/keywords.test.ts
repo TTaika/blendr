@@ -6,6 +6,8 @@ import { KEYWORD_SCHEMA, MAX_KEYWORDS, buildPrompt, generateKeywords, parseKeywo
 const founderAnswers: Answers = {
   companyName: 'Acme Grid',
   website: 'acme.example',
+  contactName: 'Jamie Rivera',
+  contactEmail: 'jamie@acme.example',
   values: ['craftsmanship', 'customer-obsession', 'sustainability'],
   stage: 'seed',
   raise: ['2000', '5000'],
@@ -54,6 +56,15 @@ describe('buildPrompt', () => {
   it('never mentions the thesis in the investor prompt', () => {
     const prompt = buildPrompt('investor', investorAnswers, null);
     expect(prompt.toLowerCase()).not.toContain('thesis');
+  });
+
+  it('never sends the founder contact name or email to the AI, but keeps the company name', () => {
+    const prompt = buildPrompt('founder', founderAnswers, null);
+    expect(prompt).not.toContain('Jamie Rivera');
+    expect(prompt).not.toContain('jamie@acme.example');
+    expect(prompt).not.toContain('Point of contact');
+    expect(prompt).not.toContain('Contact email');
+    expect(prompt).toContain('Acme Grid');
   });
 
   it('includes the investor personality and sector rules referencing valuesWanted and risk', () => {

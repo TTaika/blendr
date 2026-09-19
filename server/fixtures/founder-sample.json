@@ -2,6 +2,8 @@
   "role": "founder",
   "answers": {
     "companyName": "Northlight Grid",
+    "contactName": "Elin Virtanen",
+    "contactEmail": "elin@northlightgrid.example",
     "values": ["craftsmanship", "customer-obsession", "sustainability"],
     "stage": "seed",
     "raise": ["2000", "5000"],

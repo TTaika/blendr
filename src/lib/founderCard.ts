@@ -26,7 +26,7 @@ export function companyFromFounderProfile(profile: Profile): Company {
     team: text(a.team),
     keyNumbers: traction ? [{ label: 'Traction', value: traction }] : [],
     whyInvest: text(a.whyInvest),
-    website: '',
-    contact: { name: '', title: '', email: '' },
+    website: text(a.website),
+    contact: { name: text(a.contactName), title: 'Point of contact', email: text(a.contactEmail) },
   };
 }

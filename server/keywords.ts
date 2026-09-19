@@ -61,6 +61,7 @@ const COMMON_RULES = [
 export function buildPrompt(role: Role, answers: Answers, websiteText: string | null): string {
   const keywordList = TAXONOMY.map((t) => `- ${t.id} (${CATEGORY_LABELS[t.category]}): ${t.label}`).join('\n');
   const qa = questionsFor(role)
+    .filter((q) => !q.excludeFromAi)
     .map((q) => `Q: ${q.label}\nA: ${formatAnswer(q, answers[q.id]) || '(no answer)'}`)
     .join('\n\n');
   return [

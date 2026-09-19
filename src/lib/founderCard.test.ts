@@ -6,6 +6,9 @@ const profile: Profile = {
   role: 'founder',
   answers: {
     companyName: ' Acme ',
+    website: ' https://acme.example ',
+    contactName: ' Ada Lovelace ',
+    contactEmail: ' ada@acme.example ',
     values: ['transparency', 'bogus-id', 'speed', 'integrity', 'craftsmanship'],
     stage: 'series-a',
     raise: ['5000', '10000'],
@@ -30,12 +33,13 @@ describe('companyFromFounderProfile', () => {
       solution: '',
       team: 'Team',
       whyInvest: 'W',
-      website: '',
+      website: 'https://acme.example',
       keywords: [{ id: 'fintech', reason: 'Payments' }],
       keyNumbers: [{ label: 'Traction', value: '€1M ARR' }],
     });
     // maps option ids to labels, drops unknown ids, and keeps only the first 3
     expect(c.values).toEqual(['Transparency', 'Speed of execution', 'Integrity']);
+    expect(c.contact).toEqual({ name: 'Ada Lovelace', title: 'Point of contact', email: 'ada@acme.example' });
   });
 
   it('uses safe fallbacks for missing answers', () => {
@@ -45,5 +49,7 @@ describe('companyFromFounderProfile', () => {
     expect(c.raise).toEqual([0, 100000]);
     expect(c.keyNumbers).toEqual([]);
     expect(c.values).toEqual([]);
+    expect(c.website).toBe('');
+    expect(c.contact).toEqual({ name: '', title: 'Point of contact', email: '' });
   });
 });

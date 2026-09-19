@@ -35,6 +35,8 @@ const investorResult: KeywordResult = {
 };
 const founderAnswers: Answers = {
   companyName: 'Acme',
+  contactName: 'Ada Lovelace',
+  contactEmail: 'ada@acme.example',
   values: ['transparency', 'speed', 'integrity'],
   stage: 'seed',
   raise: ['500', '2000'],

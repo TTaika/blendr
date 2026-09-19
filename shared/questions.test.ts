@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionSteps, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
@@ -13,7 +13,8 @@ describe('questions', () => {
 
   it('defines the answer ids other modules rely on', () => {
     expect(ids(FOUNDER_QUESTIONS)).toEqual([
-      'companyName', 'values', 'stage', 'raise', 'problemSolution',
+      'companyName', 'website', 'contactName', 'contactEmail',
+      'values', 'stage', 'raise', 'problemSolution',
       'traction', 'team', 'involvement', 'whyInvest',
       'pressure', 'transparency', 'leadership',
     ]);
@@ -22,6 +23,41 @@ describe('questions', () => {
       'regions', 'involvement', 'founderFit',
       'pressure', 'transparency', 'risk',
     ]);
+  });
+
+  it('groups the founder basics questions into one step and gives every other question its own step', () => {
+    const steps = questionSteps('founder');
+    expect(steps).toHaveLength(12);
+    expect(ids(steps[0])).toEqual(['companyName', 'website', 'contactName', 'contactEmail']);
+    expect(ids(steps[1])).toEqual(['values']);
+    expect(ids(steps[11])).toEqual(['leadership']);
+    for (const step of steps.slice(1)) expect(step).toHaveLength(1);
+  });
+
+  it('gives investors 11 steps of one question each', () => {
+    const steps = questionSteps('investor');
+    expect(steps).toHaveLength(11);
+    for (const step of steps) expect(step).toHaveLength(1);
+    expect(ids(steps[0])).toEqual(['investorName']);
+  });
+
+  it('marks the contact questions as excluded from the AI prompt, and companyName as included', () => {
+    expect(FOUNDER_QUESTIONS.find((q) => q.id === 'contactName')?.excludeFromAi).toBe(true);
+    expect(FOUNDER_QUESTIONS.find((q) => q.id === 'contactEmail')?.excludeFromAi).toBe(true);
+    expect(FOUNDER_QUESTIONS.find((q) => q.id === 'companyName')?.excludeFromAi).toBeUndefined();
+  });
+
+  it('validates the contact email format in missingRequired', () => {
+    const base = { companyName: 'Acme', contactName: 'Ada' };
+    expect(missingRequired('founder', { ...base, contactEmail: 'a@b.co' }).map((q) => q.id)).not.toContain('contactEmail');
+    expect(missingRequired('founder', { ...base, contactEmail: '' }).map((q) => q.id)).toContain('contactEmail');
+    expect(missingRequired('founder', { ...base, contactEmail: 'nope' }).map((q) => q.id)).toContain('contactEmail');
+    expect(missingRequired('founder', { ...base, contactEmail: 'a@b' }).map((q) => q.id)).toContain('contactEmail');
+    expect(missingRequired('founder', base).map((q) => q.id)).toContain('contactEmail');
+  });
+
+  it('treats the founder website as optional', () => {
+    expect(missingRequired('founder', {}).map((q) => q.id)).not.toContain('website');
   });
 
   it('combines the problem and solution questions into a single problemSolution question', () => {

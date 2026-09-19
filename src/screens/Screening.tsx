@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { missingRequired, parseRange, questionsFor, type Question } from '../../shared/questions';
+import { missingRequired, parseRange, questionSteps, type Question } from '../../shared/questions';
 import type { AnswerValue, Answers, KeywordResult, Role } from '../../shared/types';
 import { requestKeywords, type RequestKeywords } from '../lib/api';
 
@@ -14,26 +14,42 @@ export interface ScreeningProps {
 
 type Status = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error'; message: string };
 
+/** The alert shown when `missing` (a subset of `stepQuestions`) fails Next/generate validation. */
+function alertFor(stepQuestions: Question[], missing: Question[], answers: Answers): string {
+  if (missing.length === 1 && missing[0].kind === 'email') {
+    const raw = answers[missing[0].id];
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      return 'Enter a valid email address.';
+    }
+  }
+  return stepQuestions.length === 1 ? 'Please answer this question to continue.' : 'Please fill in the required fields.';
+}
+
 export function Screening({ role, answers, onAnswer, onGenerated, onManual, generate = requestKeywords }: ScreeningProps) {
-  const questions = questionsFor(role);
-  const total = questions.length;
+  const steps = questionSteps(role);
+  const total = steps.length;
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
-  const [invalidStep, setInvalidStep] = useState(false);
+  const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set());
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  const question = questions[step];
+  const stepQuestions = steps[step];
   const isLast = step === total - 1;
 
-  function isCurrentMissing(q: Question) {
-    return missingRequired(role, answers).some((m) => m.id === q.id);
+  function missingInStep(qs: Question[]) {
+    const missing = missingRequired(role, answers);
+    return qs.filter((q) => missing.some((m) => m.id === q.id));
   }
 
   async function runGenerate() {
     const stillMissing = missingRequired(role, answers);
     if (stillMissing.length > 0) {
-      const firstIndex = questions.findIndex((q) => q.id === stillMissing[0].id);
-      setStep(firstIndex < 0 ? 0 : firstIndex);
-      setInvalidStep(true);
+      const targetIndex = steps.findIndex((qs) => qs.some((q) => q.id === stillMissing[0].id));
+      const target = targetIndex < 0 ? 0 : targetIndex;
+      const missingHere = stillMissing.filter((m) => steps[target].some((q) => q.id === m.id));
+      setStep(target);
+      setInvalidIds(new Set(missingHere.map((q) => q.id)));
+      setAlertMessage(alertFor(steps[target], missingHere, answers));
       setStatus({ kind: 'idle' });
       return;
     }
@@ -48,11 +64,14 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
   }
 
   function goNext() {
-    if (isCurrentMissing(question)) {
-      setInvalidStep(true);
+    const missingHere = missingInStep(stepQuestions);
+    if (missingHere.length > 0) {
+      setInvalidIds(new Set(missingHere.map((q) => q.id)));
+      setAlertMessage(alertFor(stepQuestions, missingHere, answers));
       return;
     }
-    setInvalidStep(false);
+    setInvalidIds(new Set());
+    setAlertMessage(null);
     if (isLast) {
       void runGenerate();
     } else {
@@ -61,7 +80,8 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
   }
 
   function goBack() {
-    setInvalidStep(false);
+    setInvalidIds(new Set());
+    setAlertMessage(null);
     setStep((s) => Math.max(0, s - 1));
   }
 
@@ -82,8 +102,8 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
         aria-valuenow={step + 1}
         aria-label="Question progress"
       >
-        {questions.map((q, i) => (
-          <span key={q.id} className={i <= step ? 'progress-seg on' : 'progress-seg'} />
+        {steps.map((qs, i) => (
+          <span key={qs[0].id} className={i <= step ? 'progress-seg on' : 'progress-seg'} />
         ))}
       </div>
       <form
@@ -94,10 +114,12 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
           goNext();
         }}
       >
-        <Field key={question.id} question={question} value={answers[question.id]} invalid={invalidStep} onChange={(v) => onAnswer(question.id, v)} />
-        {invalidStep && (
+        {stepQuestions.map((q) => (
+          <Field key={q.id} question={q} value={answers[q.id]} invalid={invalidIds.has(q.id)} onChange={(v) => onAnswer(q.id, v)} />
+        ))}
+        {alertMessage && (
           <p className="error" role="alert">
-            Please answer this question to continue.
+            {alertMessage}
           </p>
         )}
         {status.kind === 'error' ? (
@@ -131,6 +153,13 @@ interface FieldProps {
   invalid: boolean;
   onChange: (value: AnswerValue) => void;
 }
+
+// Autocomplete hints for text-like fields whose kind alone doesn't imply one.
+const AUTOCOMPLETE_BY_ID: Record<string, string> = {
+  companyName: 'organization',
+  website: 'url',
+  contactName: 'name',
+};
 
 function Field({ question: q, value, invalid, onChange }: FieldProps) {
   const id = `q-${q.id}`;
@@ -224,8 +253,9 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
       ) : (
         <input
           id={id}
-          type={q.kind === 'url' ? 'url' : 'text'}
-          inputMode={q.kind === 'url' ? 'url' : undefined}
+          type={q.kind === 'url' ? 'url' : q.kind === 'email' ? 'email' : 'text'}
+          inputMode={q.kind === 'url' ? 'url' : q.kind === 'email' ? 'email' : undefined}
+          autoComplete={q.kind === 'email' ? 'email' : AUTOCOMPLETE_BY_ID[q.id]}
           maxLength={q.maxLength}
           value={text}
           aria-invalid={invalid || undefined}
