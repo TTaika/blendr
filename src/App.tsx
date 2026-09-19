@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Company, KeywordResult } from '../shared/types';
 import { COMPANIES, COMPANY_BY_ID } from './data/companies';
 import { requestKeywords, type RequestKeywords } from './lib/api';
@@ -20,6 +20,7 @@ export interface AppProps {
 
 export default function App({ generate = requestKeywords, random = Math.random, swipeExitMs }: AppProps) {
   const [state, dispatch] = useDemo();
+  const [confirmingReset, setConfirmingReset] = useState(false);
   const screen = resolveScreen(state);
   const likedCompanies = useMemo(
     () => state.likedIds.map((id) => COMPANY_BY_ID.get(id)).filter((c): c is Company => c !== undefined),
@@ -39,10 +40,14 @@ export default function App({ generate = requestKeywords, random = Math.random, 
     });
   }
 
+  // Asked in-app: window.confirm() is blocked (always "cancel") in the sandboxed claude.ai frame.
   function startOver() {
-    if (window.confirm('Start over? This clears your answers, profile and likes on this phone.')) {
-      dispatch({ type: 'reset' });
-    }
+    setConfirmingReset(true);
+  }
+
+  function confirmReset() {
+    setConfirmingReset(false);
+    dispatch({ type: 'reset' });
   }
 
   function submitProfile() {
@@ -115,6 +120,31 @@ export default function App({ generate = requestKeywords, random = Math.random, 
         <button type="button" className="reset" onClick={startOver}>
           Start over
         </button>
+      )}
+      {confirmingReset && (
+        <div className="overlay">
+          <div
+            className="panel dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="start-over-title"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setConfirmingReset(false);
+            }}
+          >
+            <h2 id="start-over-title">Start over?</h2>
+            <p className="muted">This clears your answers, profile and likes on this phone.</p>
+            <div className="row">
+              <button type="button" className="btn btn-ghost" autoFocus onClick={() => setConfirmingReset(false)}>
+                Cancel
+              </button>
+              <span className="spacer" />
+              <button type="button" className="btn btn-primary" onClick={confirmReset}>
+                Start over
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

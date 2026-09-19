@@ -62,6 +62,18 @@ async function generateProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Generate my profile' }));
 }
 
+// Start over asks for confirmation in the app itself: the browser's confirm() is
+// blocked inside the sandboxed claude.ai Artifact frame, so it must never be used.
+async function confirmStartOver(user: ReturnType<typeof userEvent.setup>) {
+  const nativeConfirm = vi.spyOn(window, 'confirm');
+  await user.click(screen.getByRole('button', { name: 'Start over' }));
+  const dialog = screen.getByRole('dialog', { name: 'Start over?' });
+  expect(dialog).toHaveTextContent('This clears your answers, profile and likes on this phone.');
+  await user.click(within(dialog).getByRole('button', { name: 'Start over' }));
+  expect(nativeConfirm).not.toHaveBeenCalled();
+  nativeConfirm.mockRestore();
+}
+
 describe('App', () => {
   it('starts on role select and opens the matching questionnaire', async () => {
     const user = userEvent.setup();
@@ -136,11 +148,8 @@ describe('App', () => {
     expect(screen.getByRole('article', { name: 'Acme' })).toBeInTheDocument();
     expect(saved().feed).toEqual([]);
 
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    await user.click(screen.getByRole('button', { name: 'Start over' }));
-    expect(confirm).toHaveBeenCalledWith('Start over? This clears your answers, profile and likes on this phone.');
+    await confirmStartOver(user);
     expect(screen.getByRole('button', { name: /I'm a founder/ })).toBeInTheDocument();
-    confirm.mockRestore();
   });
 
   it('shows only one Start over button on the founder preview screen', async () => {
@@ -183,12 +192,9 @@ describe('App', () => {
 
     render(<App />);
     expect(screen.getByRole('button', { name: 'Connect (1)' })).toBeInTheDocument();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    await user.click(screen.getByRole('button', { name: 'Start over' }));
-    expect(confirm).toHaveBeenCalledWith('Start over? This clears your answers, profile and likes on this phone.');
+    await confirmStartOver(user);
     expect(screen.getByRole('button', { name: /Skip to swiping/ })).toBeInTheDocument();
     expect(saved()).toEqual(initialState);
-    confirm.mockRestore();
   });
 
   it('keeps everything when the reset is not confirmed', async () => {
@@ -198,13 +204,14 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Like' }));
     await screen.findByRole('button', { name: 'Connect (1)' });
 
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     await user.click(screen.getByRole('button', { name: 'Start over' }));
-    expect(confirm).toHaveBeenCalledOnce();
+    const dialog = screen.getByRole('dialog', { name: 'Start over?' });
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Start over?' })).not.toBeInTheDocument();
     expect(screen.getByText('Random order')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect (1)' })).toBeInTheDocument();
     expect(saved().likedIds).toHaveLength(1);
-    confirm.mockRestore();
   });
 
   it('skips saved company ids that no longer exist', () => {
