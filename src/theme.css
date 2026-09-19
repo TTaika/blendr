@@ -171,3 +171,34 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
   background: color-mix(in srgb, var(--bg-deep) 80%, transparent);
 }
 .dialog { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Role select + reset */
+.screen { padding-bottom: calc(48px + env(safe-area-inset-bottom)); } /* room for the Reset demo link */
+.role-select { justify-content: center; gap: 32px; }
+.role-select h1 { font-size: 2.4rem; }
+.role-options { display: flex; flex-direction: column; gap: 12px; }
+.role-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.role-option:hover, .role-option:focus-visible { border-color: var(--accent); }
+.role-title { font-size: 1.1rem; font-weight: 600; }
+.reset {
+  position: fixed;
+  left: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
