@@ -13,7 +13,10 @@ const profile: Profile = {
     stage: 'series-a',
     raise: ['5000', '10000'],
     problemSolution: 'P and S',
-    traction: '€1M ARR',
+    growthMoM: ' +15% MoM ',
+    revenue: '€620k ARR',
+    customers: '',
+    retention: '   ',
     team: 'Team',
     whyInvest: 'W',
   },
@@ -35,11 +38,18 @@ describe('companyFromFounderProfile', () => {
       whyInvest: 'W',
       website: 'https://acme.example',
       keywords: [{ id: 'fintech', reason: 'Payments' }],
-      keyNumbers: [{ label: 'Traction', value: '€1M ARR' }],
     });
     // maps option ids to labels, drops unknown ids, and keeps only the first 3
     expect(c.values).toEqual(['Transparency', 'Speed of execution', 'Integrity']);
     expect(c.contact).toEqual({ name: 'Ada Lovelace', title: 'Point of contact', email: 'ada@acme.example' });
+  });
+
+  it('maps filled metrics to key numbers with their card labels, trimmed, in order, skipping empty, blank or missing ones', () => {
+    const c = companyFromFounderProfile(profile);
+    expect(c.keyNumbers).toEqual([
+      { label: 'MoM growth', value: '+15% MoM' },
+      { label: 'Revenue', value: '€620k ARR' },
+    ]);
   });
 
   it('uses safe fallbacks for missing answers', () => {

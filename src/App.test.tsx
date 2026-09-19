@@ -41,7 +41,7 @@ const founderAnswers: Answers = {
   stage: 'seed',
   raise: ['500', '2000'],
   problemSolution: 'P and S',
-  traction: 'T',
+  revenue: 'R',
   team: 'Team',
   involvement: ['hands-on'],
   whyInvest: 'W',

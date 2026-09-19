@@ -12,7 +12,7 @@ const founderAnswers: Answers = {
   stage: 'seed',
   raise: ['2000', '5000'],
   problemSolution: 'Grids lack flexibility. We shift building loads.',
-  traction: '€500k ARR',
+  revenue: '€500k ARR',
   team: 'Two engineers.',
   involvement: ['hands-on'],
   whyInvest: 'The market is exploding.',

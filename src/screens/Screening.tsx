@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { missingRequired, parseRange, questionSteps, type Question } from '../../shared/questions';
+import { PAGE_TITLES, missingRequired, parseRange, questionSteps, type Question } from '../../shared/questions';
 import type { AnswerValue, Answers, KeywordResult, Role } from '../../shared/types';
 import { requestKeywords, type RequestKeywords } from '../lib/api';
 
@@ -35,6 +35,7 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
 
   const stepQuestions = steps[step];
   const isLast = step === total - 1;
+  const stepPage = stepQuestions.length > 1 ? stepQuestions[0].page : undefined;
 
   function missingInStep(qs: Question[]) {
     const missing = missingRequired(role, answers);
@@ -114,6 +115,12 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
           goNext();
         }}
       >
+        {stepPage && (
+          <>
+            <h2 className="step-title">{PAGE_TITLES[stepPage]}</h2>
+            {stepPage === 'metrics' && <p className="help">Fill in what applies. Leave the rest empty.</p>}
+          </>
+        )}
         {stepQuestions.map((q) => (
           <Field key={q.id} question={q} value={answers[q.id]} invalid={invalidIds.has(q.id)} onChange={(v) => onAnswer(q.id, v)} />
         ))}
@@ -257,6 +264,7 @@ function Field({ question: q, value, invalid, onChange }: FieldProps) {
           inputMode={q.kind === 'url' ? 'url' : q.kind === 'email' ? 'email' : undefined}
           autoComplete={q.kind === 'email' ? 'email' : AUTOCOMPLETE_BY_ID[q.id]}
           maxLength={q.maxLength}
+          placeholder={q.placeholder}
           value={text}
           aria-invalid={invalid || undefined}
           onChange={(e) => onChange(e.target.value)}

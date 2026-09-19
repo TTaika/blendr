@@ -117,7 +117,7 @@ p { margin: 0; }
 .numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 0; }
 .numbers div { background: var(--bg-deep); padding: 10px 12px; }
 .numbers dt { font-size: 0.75rem; color: var(--muted); }
-.numbers dd { margin: 2px 0 0; font-size: 1.1rem; font-weight: 600; }
+.numbers dd { margin: 2px 0 0; font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
 .card-video { width: 100%; background: var(--bg-deep); }
 .contact p { margin-top: 4px; }
 
@@ -139,6 +139,7 @@ p { margin: 0; }
 }
 .step-actions .btn { flex: 1; }
 .step-actions .btn-next { flex: 1.6; }
+.step-title { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; margin: 0; }
 .field { display: flex; flex-direction: column; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
 .field > label, .field legend { font-weight: 600; padding: 0; }
 .help { font-size: 0.85rem; color: var(--muted); }

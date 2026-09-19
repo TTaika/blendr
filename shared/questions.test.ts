@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionSteps, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PAGE_TITLES, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionSteps, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
@@ -15,7 +15,8 @@ describe('questions', () => {
     expect(ids(FOUNDER_QUESTIONS)).toEqual([
       'companyName', 'website', 'contactName', 'contactEmail',
       'values', 'stage', 'raise', 'problemSolution',
-      'traction', 'team', 'involvement', 'whyInvest',
+      'growthMoM', 'revenue', 'customers', 'retention', 'runway',
+      'team', 'involvement', 'whyInvest',
       'pressure', 'transparency', 'leadership',
     ]);
     expect(ids(INVESTOR_QUESTIONS)).toEqual([
@@ -25,13 +26,31 @@ describe('questions', () => {
     ]);
   });
 
-  it('groups the founder basics questions into one step and gives every other question its own step', () => {
+  it('groups the founder basics questions and the metrics questions into one step each, and gives every other question its own step', () => {
     const steps = questionSteps('founder');
     expect(steps).toHaveLength(12);
     expect(ids(steps[0])).toEqual(['companyName', 'website', 'contactName', 'contactEmail']);
     expect(ids(steps[1])).toEqual(['values']);
+    expect(ids(steps[5])).toEqual(['growthMoM', 'revenue', 'customers', 'retention', 'runway']);
     expect(ids(steps[11])).toEqual(['leadership']);
-    for (const step of steps.slice(1)) expect(step).toHaveLength(1);
+    const singleQuestionSteps = steps.filter((_, i) => i !== 0 && i !== 5);
+    for (const step of singleQuestionSteps) expect(step).toHaveLength(1);
+  });
+
+  it('makes the five metrics questions optional single-line text fields capped at 100 characters, each with a placeholder', () => {
+    for (const id of ['growthMoM', 'revenue', 'customers', 'retention', 'runway']) {
+      const q = FOUNDER_QUESTIONS.find((x) => x.id === id)!;
+      expect(q.kind).toBe('text');
+      expect(q.required).toBe(false);
+      expect(q.maxLength).toBe(100);
+      expect(q.page).toBe('metrics');
+      expect(typeof q.placeholder).toBe('string');
+      expect(q.placeholder!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('exports page titles for the multi-field steps', () => {
+    expect(PAGE_TITLES).toEqual({ basics: 'The basics', metrics: 'Key numbers' });
   });
 
   it('gives investors 11 steps of one question each', () => {

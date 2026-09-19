@@ -14,7 +14,7 @@ const founderAnswers: Answers = {
   stage: 'seed',
   raise: ['2000', '5000'],
   problemSolution: 'P and S',
-  traction: 'T',
+  revenue: 'R',
   team: 'Team',
   involvement: ['hands-on'],
   whyInvest: 'W',
@@ -217,7 +217,7 @@ describe('Screening', () => {
           stage: 'seed',
           raise: ['2000', '5000'],
           problemSolution: 'P and S',
-          traction: 'T',
+          revenue: 'R',
           team: 'Team',
         }}
       />,
@@ -402,7 +402,7 @@ describe('Screening: founder scale questions (pressure/transparency/leadership)'
     stage: 'seed',
     raise: ['2000', '5000'],
     problemSolution: 'P and S',
-    traction: 'T',
+    revenue: 'R',
     team: 'Team',
     involvement: ['hands-on'],
     whyInvest: 'W',
@@ -458,5 +458,75 @@ describe('Screening: founder scale questions (pressure/transparency/leadership)'
     render(<Controlled role="founder" initial={{ ...answeredThroughWhyInvest, pressure: '7' }} />);
     await goToPressure(user);
     expect(screen.getByLabelText('7').closest('label')).toHaveClass('scale-option on');
+  });
+});
+
+describe('Screening: founder metrics step', () => {
+  const answeredThroughProblemSolution: Answers = {
+    companyName: 'Acme',
+    contactName: 'Ada Lovelace',
+    contactEmail: 'ada@acme.example',
+    values: ['transparency', 'speed', 'integrity'],
+    stage: 'seed',
+    raise: ['2000', '5000'],
+    problemSolution: 'P and S',
+  };
+
+  async function goToMetrics(user: UserEvent) {
+    for (let i = 0; i < 5; i++) {
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+    }
+  }
+
+  it('shows the "Key numbers" title, a help line, and five labelled text inputs with placeholders and maxLength 100, in order', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={answeredThroughProblemSolution} />);
+    await goToMetrics(user);
+    expect(screen.getByText('6 / 12')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Key numbers', level: 2 })).toBeInTheDocument();
+    expect(screen.getByText('Fill in what applies. Leave the rest empty.')).toBeInTheDocument();
+
+    const fields: [string, string][] = [
+      ['Month-over-month growth (optional)', '+15% revenue MoM over the last 3 months'],
+      ['Revenue (ARR or MRR) (optional)', '€620k ARR, or pre-revenue'],
+      ['Customers or active users (optional)', '40 paying clinics, or 12,000 monthly active users'],
+      ['Retention or churn (optional)', '85% 6-month retention, or <2% monthly churn'],
+      ['Runway (optional)', '14 months at current burn'],
+    ];
+    for (const [label, placeholder] of fields) {
+      const input = screen.getByLabelText(label);
+      expect(input).toHaveAttribute('placeholder', placeholder);
+      expect(input).toHaveAttribute('maxLength', '100');
+    }
+
+    const ids = screen.getAllByRole('textbox').map((el) => el.getAttribute('id'));
+    expect(ids).toEqual(['q-growthMoM', 'q-revenue', 'q-customers', 'q-retention', 'q-runway']);
+  });
+
+  it('advances to the next step when all five metrics are left empty', async () => {
+    const user = userEvent.setup();
+    render(<Controlled role="founder" initial={answeredThroughProblemSolution} />);
+    await goToMetrics(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('7 / 12')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it("reports onAnswer('revenue', …) when typing into the revenue field", async () => {
+    const user = userEvent.setup();
+    const onAnswer = vi.fn();
+    render(
+      <Screening
+        role="founder"
+        answers={answeredThroughProblemSolution}
+        onAnswer={onAnswer}
+        onGenerated={vi.fn()}
+        onManual={vi.fn()}
+        generate={vi.fn(async () => result)}
+      />,
+    );
+    await goToMetrics(user);
+    await user.type(screen.getByLabelText('Revenue (ARR or MRR) (optional)'), 'R');
+    expect(onAnswer).toHaveBeenLastCalledWith('revenue', 'R');
   });
 });

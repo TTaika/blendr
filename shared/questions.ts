@@ -32,6 +32,8 @@ export interface Question {
   stops?: QuestionStop[];
   rangeLabels?: [string, string];
   scale?: QuestionScale;
+  /** Shown as the input's placeholder, for text, url and email kinds. */
+  placeholder?: string;
   /** Consecutive questions sharing a page render together on one questionnaire step. */
   page?: string;
   /** When true, this question's answer is never sent to the AI (e.g. personal contact details). */
@@ -143,14 +145,18 @@ export const PERSONALITY_OPTIONS: QuestionOption[] = TAXONOMY.filter((t) => t.ca
 
 export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60, page: 'basics' },
-  { id: 'website', label: 'Company website', help: 'Optional. We read it to suggest keywords.', kind: 'url', required: false, maxLength: 200, page: 'basics' },
+  { id: 'website', label: 'Company website', help: 'We read it to suggest keywords.', kind: 'url', required: false, maxLength: 200, page: 'basics' },
   { id: 'contactName', label: 'Point of contact', help: 'Who investors should reach out to.', kind: 'text', required: true, maxLength: 80, page: 'basics', excludeFromAi: true },
   { id: 'contactEmail', label: 'Contact email', kind: 'email', required: true, maxLength: 120, page: 'basics', excludeFromAi: true },
   { id: 'values', label: "Choose your company's three main values", help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: VALUE_OPTIONS },
   { id: 'stage', label: 'Current funding stage', kind: 'single', required: true, options: [...STAGES] },
   { id: 'raise', label: 'How much are you raising?', help: 'Drag both ends to set the range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum raise', 'Maximum raise'] },
   { id: 'problemSolution', label: 'What is the problem and how do you solve it?', kind: 'longtext', required: true, maxLength: 600 },
-  { id: 'traction', label: 'Key numbers and growth', help: 'e.g. ARR, month-on-month growth, users, pilots', kind: 'longtext', required: true, maxLength: 300 },
+  { id: 'growthMoM', label: 'Month-over-month growth', kind: 'text', required: false, maxLength: 100, page: 'metrics', placeholder: '+15% revenue MoM over the last 3 months' },
+  { id: 'revenue', label: 'Revenue (ARR or MRR)', kind: 'text', required: false, maxLength: 100, page: 'metrics', placeholder: '€620k ARR, or pre-revenue' },
+  { id: 'customers', label: 'Customers or active users', kind: 'text', required: false, maxLength: 100, page: 'metrics', placeholder: '40 paying clinics, or 12,000 monthly active users' },
+  { id: 'retention', label: 'Retention or churn', kind: 'text', required: false, maxLength: 100, page: 'metrics', placeholder: '85% 6-month retention, or <2% monthly churn' },
+  { id: 'runway', label: 'Runway', kind: 'text', required: false, maxLength: 100, page: 'metrics', placeholder: '14 months at current burn' },
   { id: 'team', label: 'Your team and experience', kind: 'longtext', required: true, maxLength: 400 },
   { id: 'involvement', label: 'What kind of investor involvement do you want?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'whyInvest', label: 'Why should an investor invest in you now?', kind: 'longtext', required: true, maxLength: 400 },
@@ -176,6 +182,9 @@ export const INVESTOR_QUESTIONS: Question[] = [
 export function questionsFor(role: Role): Question[] {
   return role === 'founder' ? FOUNDER_QUESTIONS : INVESTOR_QUESTIONS;
 }
+
+/** Titles shown above a multi-field questionnaire step (see `questionSteps` and `Question.page`). */
+export const PAGE_TITLES: Record<string, string> = { basics: 'The basics', metrics: 'Key numbers' };
 
 /**
  * Groups a role's questions into questionnaire steps: consecutive questions sharing the same
