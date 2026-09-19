@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { Company, FeedEntry } from '../../shared/types';
 import { CompanyCard } from '../components/CompanyCard';
 
@@ -45,11 +45,21 @@ export function Swipe({
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState<Decision | null>(null);
   const drag = useRef<{ startX: number; pointerId: number } | null>(null);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   function decide(decision: Decision) {
     if (!top || exiting) return;
     setExiting(decision);
-    window.setTimeout(() => {
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
       setExiting(null);
       setDx(0);
       if (decision === 'like') onLike(top.companyId);
@@ -62,6 +72,7 @@ export function Swipe({
     if ((e.target as HTMLElement).closest('button, a, video')) return;
     drag.current = { startX: e.clientX, pointerId: e.pointerId };
     setDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
   }
 
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
@@ -148,7 +159,15 @@ export function Swipe({
 
       {showConnectPrompt && (
         <div className="overlay">
-          <div className="panel dialog" role="dialog" aria-modal="true" aria-labelledby="connect-prompt-title">
+          <div
+            className="panel dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="connect-prompt-title"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') onDismissPrompt();
+            }}
+          >
             <h2 id="connect-prompt-title">Nice, {likedCount} likes!</h2>
             <p className="muted">Want to review them on the Connect page?</p>
             <div className="row">
@@ -156,7 +175,7 @@ export function Swipe({
                 Keep swiping
               </button>
               <span className="spacer" />
-              <button type="button" className="btn btn-primary" onClick={onOpenConnect}>
+              <button type="button" className="btn btn-primary" autoFocus onClick={onOpenConnect}>
                 Go to Connect
               </button>
             </div>
