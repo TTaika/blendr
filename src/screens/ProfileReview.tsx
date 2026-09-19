@@ -77,12 +77,11 @@ export function ProfileReview({ profile, onAdd, onRemove, onEditAnswers, onSubmi
         </div>
       </div>
 
-      <div className="row">
+      <div className="step-actions">
         <button type="button" className="btn btn-ghost" onClick={onEditAnswers}>
           Edit answers
         </button>
-        <span className="spacer" />
-        <button type="button" className="btn btn-primary" disabled={profile.keywords.length === 0} onClick={onSubmit}>
+        <button type="button" className="btn btn-primary btn-next" disabled={profile.keywords.length === 0} onClick={onSubmit}>
           Submit profile
         </button>
       </div>

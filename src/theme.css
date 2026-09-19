@@ -45,7 +45,7 @@ h3 { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; mar
 p { margin: 0; }
 .muted { color: var(--muted); }
 .error { color: var(--danger); }
-.row { display: flex; gap: 10px; align-items: center; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .spacer { flex: 1; }
 
 .btn {
@@ -64,7 +64,7 @@ p { margin: 0; }
 .btn-primary { background: var(--text); color: var(--accent-ink); box-shadow: none; }
 .btn-primary:hover, .btn-primary:focus-visible { background: var(--accent); color: var(--accent-ink); box-shadow: none; outline: none; }
 .btn-ghost { background: transparent; }
-.btn-small { min-height: 36px; padding: 6px 14px; font-size: 0.9rem; }
+.btn-small { min-height: 44px; padding: 6px 14px; font-size: 0.9rem; display: inline-flex; align-items: center; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .panel {
@@ -79,9 +79,9 @@ p { margin: 0; }
 .chip { display: inline-flex; align-items: center; box-shadow: inset 0 0 0 1px var(--border); background: transparent; }
 .chip-matched { box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent); }
 .chip-open { background: var(--surface-2); }
-.chip-label { background: none; border: 0; padding: 6px 12px; cursor: pointer; font-size: 0.9rem; }
+.chip-label { background: none; border: 0; padding: 6px 12px; cursor: pointer; font-size: 0.9rem; min-height: 44px; display: inline-flex; align-items: center; }
 .chip-matched .chip-label { color: var(--accent); }
-.chip-remove { background: none; border: 0; padding: 6px 10px 6px 0; cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1; }
+.chip-remove { background: none; border: 0; padding: 6px 10px 6px 0; cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1; min-height: 44px; min-width: 32px; display: inline-flex; align-items: center; justify-content: center; }
 .chip-reason { margin-top: 10px; padding: 10px 12px; background: var(--bg-deep); font-size: 0.9rem; color: var(--muted); }
 .chip-reason strong { color: var(--text); }
 
@@ -100,7 +100,23 @@ p { margin: 0; }
 .contact p { margin-top: 4px; }
 
 /* Forms */
-.form { display: flex; flex-direction: column; gap: 18px; }
+.form { display: flex; flex-direction: column; gap: 18px; flex: 1; padding-bottom: 8px; }
+
+/* Sticky bottom action bar: pinned to the foot of a step (Screening) or a review screen
+   (ProfileReview). margin-top: auto docks it at the bottom when content is short; position:
+   sticky keeps it pinned to the viewport while content taller than the screen scrolls under it. */
+.step-actions {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+.step-actions .btn { flex: 1; }
+.step-actions .btn-next { flex: 1.6; }
 .field { display: flex; flex-direction: column; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
 .field > label, .field legend { font-weight: 600; padding: 0; }
 .help { font-size: 0.85rem; color: var(--muted); }
@@ -117,7 +133,7 @@ textarea { resize: vertical; }
 input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
 [aria-invalid='true'] { border-color: var(--danger); }
 .options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-.option { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; box-shadow: inset 0 0 0 1px var(--border); background: var(--surface); cursor: pointer; font-size: 0.9rem; }
+.option { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; min-height: 44px; box-shadow: inset 0 0 0 1px var(--border); background: var(--surface); cursor: pointer; font-size: 0.9rem; }
 .option input { accent-color: var(--accent); margin: 0; }
 .option-on { box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .option-disabled { opacity: 0.4; cursor: not-allowed; }
@@ -245,7 +261,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 .dialog { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; background: linear-gradient(180deg, color-mix(in srgb, var(--tint) 45%, var(--surface)) 0%, var(--surface) 55%); box-shadow: inset 0 0 0 1px var(--border); clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut))); padding: 20px; }
 
 /* Role select + reset */
-.screen { padding-bottom: calc(48px + env(safe-area-inset-bottom)); } /* room for the Start over link */
+.screen { padding-bottom: calc(64px + env(safe-area-inset-bottom)); } /* room for the 44px-tall Start over link */
 .role-select { justify-content: center; gap: 32px; }
 .role-options { display: flex; flex-direction: column; gap: 12px; }
 .role-option {
@@ -270,6 +286,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   background: var(--bg-deep);
   box-shadow: inset 0 0 0 1px var(--border);
   padding: 6px 12px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   color: var(--muted);
   font-size: 0.75rem;
   text-decoration: underline;
@@ -472,10 +491,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
   align-items: center;
   justify-content: center;
   width: 100%;
-  aspect-ratio: 1;
-  min-width: 32px;
-  max-width: 36px;
-  margin: 0 auto;
+  height: 44px;
   font-family: var(--font-display);
   font-weight: 700;
   box-shadow: inset 0 0 0 1px var(--border);

@@ -109,14 +109,13 @@ export function Screening({ role, answers, onAnswer, onGenerated, onManual, gene
             </div>
           </div>
         ) : (
-          <div className="row">
+          <div className="step-actions">
             {step > 0 && (
               <button type="button" className="btn" onClick={goBack}>
                 Back
               </button>
             )}
-            <span className="spacer" />
-            <button type="submit" className="btn btn-primary" disabled={status.kind === 'loading'}>
+            <button type="submit" className="btn btn-primary btn-next" disabled={status.kind === 'loading'}>
               {isLast ? (status.kind === 'loading' ? 'Analysing your answers…' : 'Generate my profile') : 'Next'}
             </button>
           </div>
