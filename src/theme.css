@@ -468,5 +468,15 @@ input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: 
 .swipe-actions { gap: 24px; padding: 2px 8px 6px; }
 .swipe .round { width: 56px; height: 56px; font-size: 1.35rem; }
 .swipe ~ .reset { bottom: calc(env(safe-area-inset-bottom) + 12px); }
+/* Questionnaire and review: the sticky Back/Next bar owns the bottom edge, so the link sits
+   top-right beside the small "profile" eyebrow and scrolls away with the page. */
+.reset.reset-top {
+  position: absolute;
+  top: calc(6px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  left: auto;
+  bottom: auto;
+  min-height: 32px;
+}
 .swipe-card .card { padding: 16px; gap: 16px; }
 .swipe-card .card-head { gap: 10px; }

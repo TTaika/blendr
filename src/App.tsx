@@ -117,7 +117,12 @@ export default function App({ generate = requestKeywords, random = Math.random, 
     <>
       {renderScreen()}
       {screen !== 'role' && screen !== 'founder-preview' && (
-        <button type="button" className="reset" onClick={startOver}>
+        // Screens with a sticky Back/Next bar get the link at the top instead, clear of Back.
+        <button
+          type="button"
+          className={screen === 'screening' || screen === 'review' ? 'reset reset-top' : 'reset'}
+          onClick={startOver}
+        >
           Start over
         </button>
       )}
