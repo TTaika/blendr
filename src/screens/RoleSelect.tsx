@@ -14,7 +14,7 @@ export function RoleSelect({ onChoose }: RoleSelectProps) {
   return (
     <main className="screen role-select">
       <header>
-        <p className="muted">Slush matchmaking</p>
+        <p className="muted">SLUSH™</p>
         <h1 className="wordmark">Blendr</h1>
         <p>Meet the right founders and investors before the doors open.</p>
       </header>
