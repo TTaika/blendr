@@ -13,7 +13,7 @@ const entries: FeedEntry[] = [
 
 function setup(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
   const handlers = { onLike: vi.fn(), onDiscard: vi.fn(), onOpenConnect: vi.fn(), onDismissPrompt: vi.fn(), onReviewPassed: vi.fn() };
-  render(
+  const result = render(
     <Swipe
       entries={entries}
       companies={COMPANY_BY_ID}
@@ -25,7 +25,7 @@ function setup(props: Partial<Parameters<typeof Swipe>[0]> = {}) {
       {...props}
     />,
   );
-  return { user: userEvent.setup(), ...handlers };
+  return { user: userEvent.setup(), unmount: result.unmount, ...handlers };
 }
 
 describe('swipeDecision', () => {
@@ -77,5 +77,25 @@ describe('Swipe', () => {
     expect(onReviewPassed).toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Go to Connect' }));
     expect(onOpenConnect).toHaveBeenCalled();
+  });
+
+  it('cleans up timer on unmount to prevent stale callbacks', async () => {
+    const { user, onLike, unmount } = setup({ exitMs: 50 });
+    await user.click(screen.getByRole('button', { name: 'Like' }));
+    unmount();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(onLike).not.toHaveBeenCalled();
+  });
+
+  it('focuses the "Go to Connect" button when the prompt opens', () => {
+    setup({ likedCount: 5, showConnectPrompt: true });
+    const button = screen.getByRole('button', { name: 'Go to Connect' });
+    expect(button).toHaveFocus();
+  });
+
+  it('dismisses the prompt when Escape is pressed', async () => {
+    const { user, onDismissPrompt } = setup({ likedCount: 5, showConnectPrompt: true });
+    await user.keyboard('{Escape}');
+    expect(onDismissPrompt).toHaveBeenCalled();
   });
 });
