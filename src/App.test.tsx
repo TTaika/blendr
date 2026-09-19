@@ -14,13 +14,13 @@ const investorAnswers: Answers = {
   fundName: 'Birch Ventures',
   stages: ['seed'],
   tickets: ['2000', '5000'],
-  thesis: 'Climate software for the energy transition.',
+  valuesWanted: ['data-driven', 'long-term'],
   regions: 'Nordics',
   involvement: ['hands-on'],
   founderFit: 'Technical founders.',
   pressure: '8',
   transparency: '7',
-  leadership: '6',
+  risk: '7',
 };
 const investorResult: KeywordResult = {
   summary: 'Nordic climate seed fund',

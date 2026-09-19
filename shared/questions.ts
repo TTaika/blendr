@@ -1,4 +1,4 @@
-import { STAGES } from './taxonomy';
+import { STAGES, TAXONOMY } from './taxonomy';
 import type { AnswerValue, Answers, Role } from './types';
 
 export type QuestionKind = 'text' | 'longtext' | 'url' | 'single' | 'multi' | 'range' | 'scale';
@@ -95,7 +95,7 @@ export function parseScale(question: Question, value: AnswerValue | undefined): 
 
 const SCALE_HELP = 'Tap a number from 1 to 10.';
 
-function scaleQuestion(id: 'pressure' | 'transparency' | 'leadership', label: string, minLabel: string, maxLabel: string): Question {
+function scaleQuestion(id: 'pressure' | 'transparency' | 'leadership' | 'risk', label: string, minLabel: string, maxLabel: string): Question {
   return {
     id,
     label,
@@ -131,6 +131,13 @@ export const VALUE_OPTIONS: QuestionOption[] = [
   { id: 'impact', label: 'Social impact' },
 ];
 
+// Derived from the taxonomy's personality keywords, in taxonomy order, so the chosen answer maps
+// straight to a keyword.
+export const PERSONALITY_OPTIONS: QuestionOption[] = TAXONOMY.filter((t) => t.category === 'personality').map((t) => ({
+  id: t.id,
+  label: t.label,
+}));
+
 export const FOUNDER_QUESTIONS: Question[] = [
   { id: 'companyName', label: 'Company name', kind: 'text', required: true, maxLength: 60 },
   { id: 'values', label: "Choose your company's three main values", help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: VALUE_OPTIONS },
@@ -152,13 +159,13 @@ export const INVESTOR_QUESTIONS: Question[] = [
   { id: 'fundName', label: 'Fund or firm', kind: 'text', required: true, maxLength: 60 },
   { id: 'stages', label: 'Which stages do you invest in?', kind: 'multi', required: true, options: [...STAGES] },
   { id: 'tickets', label: 'What ticket sizes can you provide?', help: 'Drag both ends to set your range.', kind: 'range', required: true, stops: TICKET_STOPS, rangeLabels: ['Minimum ticket', 'Maximum ticket'] },
-  { id: 'thesis', label: 'Describe your investment thesis', help: 'Sectors, business models, what excites you', kind: 'longtext', required: true, maxLength: 400 },
+  { id: 'valuesWanted', label: 'What do you value in a startup?', help: 'Pick up to three.', kind: 'multi', required: true, maxSelections: 3, options: PERSONALITY_OPTIONS },
   { id: 'regions', label: 'Which regions do you invest in?', kind: 'text', required: true, maxLength: 120 },
   { id: 'involvement', label: 'How involved are you after investing?', help: 'Pick all that apply.', kind: 'multi', required: true, options: INVOLVEMENT_OPTIONS },
   { id: 'founderFit', label: 'What makes you say yes to a founder?', kind: 'longtext', required: true, maxLength: 300 },
   scaleQuestion('pressure', 'How hard do you push founders on targets?', 'Patient: long runway, light check-ins', 'Intense: clear targets, weekly check-ins'),
   scaleQuestion('transparency', 'How much transparency do you expect from founders?', 'Quarterly highlights are enough', 'Bad news the same day it happens'),
-  scaleQuestion('leadership', 'How much say do you want in company decisions?', 'None: founders decide', 'A voice in every major call'),
+  scaleQuestion('risk', 'How much risk do you like to take?', 'Proven models, steady returns', 'Moonshots, all-or-nothing'),
 ];
 
 export function questionsFor(role: Role): Question[] {

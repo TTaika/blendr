@@ -20,6 +20,20 @@ const founderAnswers: Answers = {
   leadership: '4',
 };
 
+const investorAnswers: Answers = {
+  investorName: 'Sara',
+  fundName: 'Birch Ventures',
+  stages: ['seed'],
+  tickets: ['2000', '5000'],
+  valuesWanted: ['data-driven', 'long-term'],
+  regions: 'Nordics',
+  involvement: ['hands-on'],
+  founderFit: 'Technical founders.',
+  pressure: '8',
+  transparency: '7',
+  risk: '6',
+};
+
 describe('buildPrompt', () => {
   it('includes the role rules, every taxonomy id, labelled answers and website text', () => {
     const prompt = buildPrompt('founder', founderAnswers, 'We are Acme Grid.');
@@ -36,6 +50,20 @@ describe('buildPrompt', () => {
     expect(prompt).toContain('profiling an investor');
     expect(prompt).toContain('Q: Fund or firm\nA: (no answer)');
     expect(prompt).toContain('Website text: (not available)');
+  });
+
+  it('never mentions the thesis in the investor prompt', () => {
+    const prompt = buildPrompt('investor', investorAnswers, null);
+    expect(prompt.toLowerCase()).not.toContain('thesis');
+  });
+
+  it('includes the investor personality and sector rules referencing valuesWanted and risk', () => {
+    const prompt = buildPrompt('investor', investorAnswers, null);
+    expect(prompt).toContain('Pick sector keywords only if the answers explicitly name sectors; otherwise pick none.');
+    expect(prompt).toContain(
+      'Pick 2-3 personality keywords from what they value in a startup, the three 1-10 scale answers (pressure, transparency, risk) and what makes them say yes to a founder.',
+    );
+    expect(prompt).toContain("Q: What do you value in a startup?\nA: Data-driven, Long-term thinker");
   });
 });
 
@@ -142,5 +170,50 @@ describe('generateKeywords', () => {
       { model, fetchWebsite },
     );
     expect(result.keywords).toEqual([{ id: 'hands-on', reason: 'You chose this in the questionnaire.' }]);
+  });
+
+  it('appends each chosen valuesWanted id the model missed, for investors', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () => JSON.stringify({ summary: 's', keywords: [{ id: 'climate', reason: 'Focus' }] }));
+    const result = await generateKeywords('investor', { ...investorAnswers, involvement: [] }, { model, fetchWebsite });
+    expect(result.keywords).toEqual([
+      { id: 'climate', reason: 'Focus' },
+      { id: 'data-driven', reason: 'You value this in a startup.' },
+      { id: 'long-term', reason: 'You value this in a startup.' },
+    ]);
+  });
+
+  it('does not duplicate a valuesWanted id the model already returned', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () =>
+      JSON.stringify({ summary: 's', keywords: [{ id: 'data-driven', reason: 'Likes data' }] }),
+    );
+    const result = await generateKeywords('investor', { ...investorAnswers, involvement: [] }, { model, fetchWebsite });
+    expect(result.keywords).toEqual([
+      { id: 'data-driven', reason: 'Likes data' },
+      { id: 'long-term', reason: 'You value this in a startup.' },
+    ]);
+  });
+
+  it('accepts a legacy string valuesWanted answer', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () => JSON.stringify({ summary: 's', keywords: [] }));
+    const result = await generateKeywords(
+      'investor',
+      { ...investorAnswers, involvement: [], valuesWanted: 'data-driven' },
+      { model, fetchWebsite },
+    );
+    expect(result.keywords).toEqual([{ id: 'data-driven', reason: 'You value this in a startup.' }]);
+  });
+
+  it('is harmless for founders, who have no valuesWanted answer', async () => {
+    const fetchWebsite = vi.fn(async (_url: string) => 'unused');
+    const model = vi.fn(async () => JSON.stringify({ summary: 's', keywords: [{ id: 'climate', reason: 'Grid' }] }));
+    const result = await generateKeywords('founder', { ...founderAnswers, website: '' }, { model, fetchWebsite });
+    // The involvement append still runs (unrelated feature); no valuesWanted keyword is added.
+    expect(result.keywords).toEqual([
+      { id: 'climate', reason: 'Grid' },
+      { id: 'hands-on', reason: 'You chose this in the questionnaire.' },
+    ]);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionsFor } from './questions';
+import { FOUNDER_QUESTIONS, INVESTOR_QUESTIONS, PERSONALITY_OPTIONS, TICKET_STOPS, VALUE_OPTIONS, formatAmount, formatAnswer, formatRange, missingRequired, parseRange, questionsFor } from './questions';
 import { getKeyword } from './taxonomy';
 
 const ids = (qs: { id: string }[]) => qs.map((q) => q.id);
@@ -18,9 +18,9 @@ describe('questions', () => {
       'pressure', 'transparency', 'leadership',
     ]);
     expect(ids(INVESTOR_QUESTIONS)).toEqual([
-      'investorName', 'fundName', 'stages', 'tickets', 'thesis',
+      'investorName', 'fundName', 'stages', 'tickets', 'valuesWanted',
       'regions', 'involvement', 'founderFit',
-      'pressure', 'transparency', 'leadership',
+      'pressure', 'transparency', 'risk',
     ]);
   });
 
@@ -30,6 +30,29 @@ describe('questions', () => {
     expect(values.maxSelections).toBe(3);
     expect(values.options).toEqual(VALUE_OPTIONS);
     expect(VALUE_OPTIONS).toHaveLength(14);
+  });
+
+  it('makes the valuesWanted question a multi-choice with at most 3 selections from the 9 personality options', () => {
+    const valuesWanted = INVESTOR_QUESTIONS.find((q) => q.id === 'valuesWanted')!;
+    expect(valuesWanted.kind).toBe('multi');
+    expect(valuesWanted.required).toBe(true);
+    expect(valuesWanted.maxSelections).toBe(3);
+    expect(valuesWanted.options).toEqual(PERSONALITY_OPTIONS);
+    expect(PERSONALITY_OPTIONS).toHaveLength(9);
+    for (const o of PERSONALITY_OPTIONS) expect(getKeyword(o.id)?.category).toBe('personality');
+  });
+
+  it('gives the investor risk question a 1-10 scale with the moonshot/steady-returns labels', () => {
+    const risk = INVESTOR_QUESTIONS.find((q) => q.id === 'risk')!;
+    expect(risk.kind).toBe('scale');
+    expect(risk.required).toBe(true);
+    expect(risk.help).toBe('Tap a number from 1 to 10.');
+    expect(risk.scale).toEqual({
+      min: 1,
+      max: 10,
+      minLabel: 'Proven models, steady returns',
+      maxLabel: 'Moonshots, all-or-nothing',
+    });
   });
 
   it('gives every choice question options, and involvement options are taxonomy keywords', () => {
@@ -61,7 +84,7 @@ describe('questions', () => {
       stages: [],
       tickets: ['500', '5000'],
     });
-    expect(ids(missing)).toEqual(['fundName', 'stages', 'thesis', 'regions', 'involvement', 'founderFit', 'pressure', 'transparency', 'leadership']);
+    expect(ids(missing)).toEqual(['fundName', 'stages', 'valuesWanted', 'regions', 'involvement', 'founderFit', 'pressure', 'transparency', 'risk']);
   });
 
   it('treats a valid two-stop range as answered, and anything else as missing', () => {
@@ -70,13 +93,13 @@ describe('questions', () => {
         investorName: 'Sara',
         fundName: 'Birch',
         stages: ['seed'],
-        thesis: 'T',
+        valuesWanted: ['data-driven'],
         regions: 'Nordics',
         involvement: 'hands-on',
         founderFit: 'F',
         pressure: '5',
         transparency: '5',
-        leadership: '5',
+        risk: '5',
         tickets,
       }).map((q) => q.id);
     expect(missingFor(['500', '5000'])).not.toContain('tickets');
@@ -131,14 +154,19 @@ describe('questions', () => {
   });
 
   it('gives every scale question 1-10 bounds, required, and the tap help text', () => {
-    for (const qs of [FOUNDER_QUESTIONS, INVESTOR_QUESTIONS]) {
-      for (const id of ['pressure', 'transparency', 'leadership']) {
-        const q = qs.find((x) => x.id === id)!;
-        expect(q.kind).toBe('scale');
-        expect(q.required).toBe(true);
-        expect(q.scale).toEqual({ min: 1, max: 10, minLabel: expect.any(String), maxLabel: expect.any(String) });
-        expect(q.help).toBe('Tap a number from 1 to 10.');
-      }
+    for (const id of ['pressure', 'transparency', 'leadership']) {
+      const q = FOUNDER_QUESTIONS.find((x) => x.id === id)!;
+      expect(q.kind).toBe('scale');
+      expect(q.required).toBe(true);
+      expect(q.scale).toEqual({ min: 1, max: 10, minLabel: expect.any(String), maxLabel: expect.any(String) });
+      expect(q.help).toBe('Tap a number from 1 to 10.');
+    }
+    for (const id of ['pressure', 'transparency', 'risk']) {
+      const q = INVESTOR_QUESTIONS.find((x) => x.id === id)!;
+      expect(q.kind).toBe('scale');
+      expect(q.required).toBe(true);
+      expect(q.scale).toEqual({ min: 1, max: 10, minLabel: expect.any(String), maxLabel: expect.any(String) });
+      expect(q.help).toBe('Tap a number from 1 to 10.');
     }
   });
 
