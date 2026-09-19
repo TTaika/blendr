@@ -22,6 +22,8 @@ npm start
 
 The server prints `Open on phones: http://<ip>:3000`. Phones must be on the same Wi-Fi network, and the laptop needs internet for Gemini.
 
+With a key set, the server also makes one test request to Gemini right after starting and prints `Gemini self-test OK: <model>, <ms> ms, <n> keywords`. If it prints `Gemini self-test FAILED (<model>): <error>` instead, fix `GEMINI_API_KEY` / `GEMINI_MODEL` in `.env` and restart before letting testers in.
+
 - Phones can't connect and the firewall is on? `sudo ufw allow 3000/tcp`
 - Guest/venue Wi-Fi often isolates devices from each other. Use your own router or a phone hotspot instead.
 

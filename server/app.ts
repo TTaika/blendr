@@ -3,12 +3,14 @@ import path from 'node:path';
 import express from 'express';
 import type { Answers } from '../shared/types';
 import { generateKeywords, type ModelCall } from './keywords';
+import type { SelfTest } from './selfTest';
 import type { FetchWebsite } from './website';
 
 export interface AppDeps {
   model: ModelCall | null; // null when GEMINI_API_KEY is missing
   fetchWebsite: FetchWebsite;
   staticDir?: string; // built SPA (dist/) in production
+  getSelfTest?: () => SelfTest; // startup Gemini check, reported by /api/health
 }
 
 function isAnswers(value: unknown): value is Answers {
@@ -23,7 +25,8 @@ export function createApp(deps: AppDeps) {
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, gemini: deps.model !== null });
+    const selfTest: SelfTest = deps.model && deps.getSelfTest ? deps.getSelfTest() : { status: 'skipped' };
+    res.json({ ok: true, gemini: deps.model !== null, selfTest });
   });
 
   app.post('/api/keywords', async (req, res) => {

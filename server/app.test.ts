@@ -41,9 +41,17 @@ describe('POST /api/keywords', () => {
 });
 
 describe('GET /api/health', () => {
+  const health = async (app: ReturnType<typeof createApp>) => (await request(app).get('/api/health')).body;
+
   it('reports whether Gemini is configured', async () => {
-    expect((await request(createApp({ model: okModel, fetchWebsite: noWebsite })).get('/api/health')).body).toEqual({ ok: true, gemini: true });
-    expect((await request(createApp({ model: null, fetchWebsite: noWebsite })).get('/api/health')).body).toEqual({ ok: true, gemini: false });
+    expect(await health(createApp({ model: okModel, fetchWebsite: noWebsite }))).toEqual({ ok: true, gemini: true, selfTest: { status: 'skipped' } });
+    expect(await health(createApp({ model: null, fetchWebsite: noWebsite }))).toEqual({ ok: true, gemini: false, selfTest: { status: 'skipped' } });
+  });
+
+  it('reports the Gemini self-test result when there is a key', async () => {
+    const selfTest = { status: 'ok', ms: 812, keywords: 7 } as const;
+    expect(await health(createApp({ model: okModel, fetchWebsite: noWebsite, getSelfTest: () => selfTest }))).toEqual({ ok: true, gemini: true, selfTest });
+    expect(await health(createApp({ model: null, fetchWebsite: noWebsite, getSelfTest: () => selfTest }))).toEqual({ ok: true, gemini: false, selfTest: { status: 'skipped' } });
   });
 });
 
