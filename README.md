@@ -1,6 +1,6 @@
 # Blendr: Slush matchmaking demo
 
-Founders and investors answer a short questionnaire. Gemini turns the answers (and the website, if given) into keywords from a fixed taxonomy, each with a reason. Users can then add or remove keywords. Investors swipe startups ranked for them and review their likes on the Connect page.
+Founders and investors answer a short questionnaire. AI turns the answers (and the website, if given) into keywords from a fixed taxonomy, each with a reason. Users can then add or remove keywords. Investors swipe startups ranked for them and review their likes on the Connect page. The connect page allows a direct link to set up a meeting in the Slush-app.
 
 ## Setup (once)
 
